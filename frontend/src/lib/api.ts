@@ -1,7 +1,8 @@
 import type { InputMethod, ManualThreadInput, Profile, Thread } from '@/lib/types'
 import type { Session } from '@supabase/supabase-js'
 
-const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:4000'
+const configuredApiUrl = (import.meta.env.VITE_API_URL as string | undefined)?.trim()
+const API_URL = import.meta.env.PROD ? '' : configuredApiUrl || 'http://localhost:4000'
 
 type ApiOptions = RequestInit & {
   token?: string | null
