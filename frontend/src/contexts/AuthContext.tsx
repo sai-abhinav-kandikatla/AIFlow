@@ -108,13 +108,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await clearStaleAuthState()
         try {
           const response = await authApi.signup(payload)
-          if (response.session) {
-            const { data } = await requireSupabase().auth.setSession(response.session)
-            setSession(data.session ?? response.session)
-          }
+          await clearStaleAuthState()
           return {
             message: response.message,
-            needsVerification: !response.session,
+            needsVerification: true,
           }
         } catch (error) {
           await clearStaleAuthState()

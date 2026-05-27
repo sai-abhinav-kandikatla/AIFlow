@@ -88,8 +88,8 @@ router.post(
 
     res.status(201).json({
       user: data.user,
-      session: data.session,
-      message: data.session ? "Signed up successfully." : "Check your email to verify your account."
+      session: null,
+      message: "Check your email to verify your account."
     });
   })
 );
@@ -107,6 +107,9 @@ router.post(
 
     if (error) throw new AppError(401, error.message);
     if (!data.user?.email || !data.session) throw new AppError(401, "Login failed.");
+    if (!data.user.email_confirmed_at) {
+      throw new AppError(403, "Verify your email before signing in. Check your inbox, then come back to AIFlow.");
+    }
 
     const metadata = data.user.user_metadata ?? {};
     const profile = await prisma.user.upsert({

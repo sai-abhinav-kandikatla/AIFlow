@@ -36,8 +36,9 @@ export const SignupPage = () => {
   const navigate = useNavigate()
 
   useEffect(() => {
+    if (verifyEmail) return
     if (session) navigate('/app', { replace: true })
-  }, [navigate, session])
+  }, [navigate, session, verifyEmail])
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -48,6 +49,7 @@ export const SignupPage = () => {
       toast.success('Account created successfully')
       if (result.needsVerification) {
         setVerifyEmail(email)
+        setPassword('')
       } else {
         toast.success('Opening your dashboard')
         navigate('/app', { replace: true })
