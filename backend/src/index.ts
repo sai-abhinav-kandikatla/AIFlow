@@ -27,7 +27,17 @@ app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
 
 app.get("/health", (_req, res) => {
-  res.json({ ok: true, service: "aiflow-api" });
+  res.json({
+    ok: true,
+    service: "aiflow-api",
+    config: {
+      supabaseUrl: Boolean(env.SUPABASE_URL),
+      supabaseAnonKey: Boolean(env.SUPABASE_ANON_KEY),
+      databaseUrl: Boolean(env.DATABASE_URL),
+      geminiApiKey: Boolean(env.GEMINI_API_KEY),
+      frontendUrl: env.FRONTEND_URL
+    }
+  });
 });
 
 app.use("/api/auth", authRoutes);
