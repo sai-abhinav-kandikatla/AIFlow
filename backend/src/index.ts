@@ -10,6 +10,19 @@ import { errorHandler } from "./middleware/error.js";
 
 const app = express();
 
+const readSupabaseProjectRef = (value: string | undefined) => {
+  if (!value) return null;
+
+  try {
+    const url = value.startsWith("postgresql://") ? new URL(value) : new URL(value);
+    const projectFromHost = url.hostname.match(/(?:^|\.)db\.([a-z0-9]{20})\.supabase\.co$/)?.[1];
+    const projectFromUser = decodeURIComponent(url.username).match(/^postgres\.([a-z0-9]{20})$/)?.[1];
+    return projectFromHost ?? projectFromUser ?? null;
+  } catch {
+    return null;
+  }
+};
+
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }
@@ -34,6 +47,8 @@ const healthPayload = () => ({
       supabaseUrl: Boolean(env.SUPABASE_URL),
       supabaseAnonKey: Boolean(env.SUPABASE_ANON_KEY),
       databaseUrl: Boolean(env.DATABASE_URL),
+      databaseProjectRef: readSupabaseProjectRef(env.DATABASE_URL),
+      supabaseProjectRef: readSupabaseProjectRef(env.SUPABASE_URL),
       geminiApiKey: Boolean(env.GEMINI_API_KEY),
       frontendUrl: env.FRONTEND_URL
     }
