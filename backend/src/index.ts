@@ -26,8 +26,7 @@ app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
 
-app.get("/health", (_req, res) => {
-  res.json({
+const healthPayload = () => ({
     ok: true,
     service: "aiflow-api",
     config: {
@@ -37,7 +36,14 @@ app.get("/health", (_req, res) => {
       geminiApiKey: Boolean(env.GEMINI_API_KEY),
       frontendUrl: env.FRONTEND_URL
     }
-  });
+});
+
+app.get("/health", (_req, res) => {
+  res.json(healthPayload());
+});
+
+app.get("/api/health", (_req, res) => {
+  res.json(healthPayload());
 });
 
 app.use("/api/auth", authRoutes);
