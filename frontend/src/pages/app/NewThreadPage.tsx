@@ -62,7 +62,11 @@ export const NewThreadPage = () => {
       toast.success('Thread analyzed')
       navigate(`/app/threads/${response.thread.id}`)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Thread creation failed')
+      toast.error({
+        title: 'Thread creation failed',
+        message: error instanceof Error ? error.message : 'Something stopped the handoff from being created.',
+        recovery: 'Retry once. If it repeats, check the Railway deploy logs for the matching create-thread request.',
+      })
     } finally {
       setLoading(false)
     }

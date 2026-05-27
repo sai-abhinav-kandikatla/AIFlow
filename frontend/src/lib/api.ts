@@ -10,8 +10,19 @@ type ApiOptions = RequestInit & {
 
 const readError = async (response: Response) => {
   try {
-    const body = (await response.json()) as { error?: { message?: string } }
-    return body.error?.message ?? `Request failed with ${response.status}`
+    const body = (await response.json()) as {
+      error?: {
+        message?: string
+        details?: {
+          cause?: string
+          stage?: string
+        }
+      }
+    }
+    const message = body.error?.message ?? `Request failed with ${response.status}`
+    const cause = body.error?.details?.cause
+
+    return cause ? `${message} ${cause}` : message
   } catch {
     return `Request failed with ${response.status}`
   }
@@ -88,14 +99,24 @@ export const threadApi = {
       file?: File | null
     },
   ) => {
+    if (!payload.file) {
+      return apiRequest<{ thread: Thread }>('/api/threads/create', {
+        token,
+        method: 'POST',
+        body: JSON.stringify({
+          input_method: payload.input_method,
+          content: payload.content,
+        }),
+      })
+    }
+
     const form = new FormData()
     form.append('input_method', payload.input_method)
     if (payload.content !== undefined) {
       form.append('content', typeof payload.content === 'string' ? payload.content : JSON.stringify(payload.content))
     }
-    if (payload.file) {
-      form.append('file', payload.file)
-    }
+    form.append('file', payload.file)
+
     return apiRequest<{ thread: Thread }>('/api/threads/create', {
       token,
       method: 'POST',

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import type { NextFunction, Request, Response } from "express";
 import multer from "multer";
 import { z } from "zod";
 import { InputMethod as PrismaInputMethod } from "../generated/prisma/enums.js";
@@ -17,6 +18,29 @@ const upload = multer({
     fileSize: 1_500_000
   }
 });
+
+const optionalUpload = (req: Request, res: Response, next: NextFunction) => {
+  upload.single("file")(req, res, (error: unknown) => {
+    if (!error) {
+      next();
+      return;
+    }
+
+    if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
+      next(new AppError(400, "File upload is too large. Upload a .txt or .json file under 1.5 MB."));
+      return;
+    }
+
+    next(
+      new AppError(
+        400,
+        error instanceof Error
+          ? `File upload could not be read. ${error.message}`
+          : "File upload could not be read. Retry with a .txt or .json file."
+      )
+    );
+  });
+};
 
 const inputMethodSchema = z.enum(["share_link", "file_upload", "raw_text", "manual_description"]);
 
@@ -141,7 +165,7 @@ router.get(
 
 router.post(
   "/create",
-  upload.single("file"),
+  optionalUpload,
   asyncHandler(async (req, res) => {
     let stage = "validating the input";
 
