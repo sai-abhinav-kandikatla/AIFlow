@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Braces, Layers3, Loader2, Plus, TrendingUp, type LucideIcon } from 'lucide-react'
+import { ArrowRight, Braces, Layers3, Loader2, Mail, Plus, ShieldCheck, TrendingUp, UserRound, type LucideIcon } from 'lucide-react'
 import { toast } from '@/lib/toast'
 import { buttonVariants } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -25,6 +25,53 @@ const StatCard = ({ title, value, icon: Icon }: { title: string; value: string |
   </Card>
 )
 
+const ProfileSection = ({
+  name,
+  email,
+  avatarUrl,
+  plan,
+}: {
+  name: string
+  email: string
+  avatarUrl?: string | null
+  plan: string
+}) => (
+  <Card className="overflow-hidden">
+    <CardContent className="grid gap-5 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
+      <div className="flex min-w-0 items-center gap-4">
+        {avatarUrl ? (
+          <img src={avatarUrl} alt="" className="h-16 w-16 rounded-lg border object-cover" />
+        ) : (
+          <div className="flex h-16 w-16 items-center justify-center rounded-lg border bg-primary/10 text-xl font-semibold text-primary">
+            {name.slice(0, 1).toUpperCase()}
+          </div>
+        )}
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="truncate text-xl font-semibold">Profile</h2>
+            <span className="rounded-md border bg-muted px-2 py-1 text-xs font-medium capitalize text-muted-foreground">{plan} workspace</span>
+          </div>
+          <p className="mt-1 truncate text-sm text-muted-foreground">{name}</p>
+          <div className="mt-3 flex flex-wrap gap-3 text-sm text-muted-foreground">
+            <span className="inline-flex items-center gap-2">
+              <Mail className="h-4 w-4 text-primary" />
+              {email}
+            </span>
+            <span className="inline-flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-accent" />
+              Private Flow workspace
+            </span>
+          </div>
+        </div>
+      </div>
+      <Link to="/app/settings" className={buttonVariants({ variant: 'outline', className: 'w-full lg:w-auto' })}>
+        <UserRound className="h-4 w-4" />
+        Manage Profile
+      </Link>
+    </CardContent>
+  </Card>
+)
+
 export const DashboardPage = () => {
   const { token, profile } = useAuth()
   const [threads, setThreads] = useState<Thread[]>([])
@@ -43,6 +90,9 @@ export const DashboardPage = () => {
   const monthlyUsage = currentMonthCount(threads)
   const monthlyLimit = monthlyThreadLimit(profile?.plan)
   const recent = threads.slice(0, 5)
+  const displayName = profile?.name?.trim() || profile?.email || 'AIFlow user'
+  const displayEmail = profile?.email ?? 'Profile not loaded'
+  const plan = profile?.plan ?? 'free'
 
   return (
     <div className="space-y-6">
@@ -60,6 +110,8 @@ export const DashboardPage = () => {
       </div>
 
       {monthlyLimit !== null && monthlyUsage >= monthlyLimit ? <UsageBanner count={monthlyUsage} limit={monthlyLimit} /> : null}
+
+      <ProfileSection name={displayName} email={displayEmail} avatarUrl={profile?.avatar_url} plan={plan} />
 
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard title="Total AI Flows created" value={threads.length} icon={Layers3} />

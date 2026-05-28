@@ -134,8 +134,8 @@ export const SettingsPage = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Profile</CardTitle>
-            <CardDescription>Update your name and avatar URL.</CardDescription>
+            <CardTitle>Profile & workspace identity</CardTitle>
+            <CardDescription>Keep your AIFlow workspace recognizable across sessions and billing.</CardDescription>
           </CardHeader>
           <CardContent>
             <form className="space-y-4" onSubmit={saveProfile}>

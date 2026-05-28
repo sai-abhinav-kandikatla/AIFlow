@@ -28,48 +28,48 @@
 
 :root {
   color-scheme: light;
-  --background: #f6f7f9;
-  --foreground: #111827;
+  --background: #f7f8fb;
+  --foreground: #101318;
   --card: #ffffff;
-  --card-foreground: #111827;
+  --card-foreground: #101318;
   --popover: #ffffff;
-  --popover-foreground: #111827;
-  --primary: #2f6fed;
+  --popover-foreground: #101318;
+  --primary: #3157ff;
   --primary-foreground: #ffffff;
-  --secondary: #e8edf5;
-  --secondary-foreground: #1f2937;
-  --muted: #eef1f5;
-  --muted-foreground: #5f6877;
-  --accent: #18a999;
-  --accent-foreground: #052f2b;
-  --destructive: #e5484d;
+  --secondary: #eef1f7;
+  --secondary-foreground: #242936;
+  --muted: #eef1f6;
+  --muted-foreground: #636b7a;
+  --accent: #0ea58f;
+  --accent-foreground: #ecfffb;
+  --destructive: #d9344e;
   --destructive-foreground: #ffffff;
-  --border: #dce2ea;
-  --input: #dce2ea;
-  --ring: #2f6fed;
+  --border: #dde3ee;
+  --input: #d9e0ec;
+  --ring: #3157ff;
 }
 
 .dark {
   color-scheme: dark;
-  --background: #0d1117;
-  --foreground: #edf2f7;
-  --card: #121821;
-  --card-foreground: #edf2f7;
-  --popover: #141b25;
-  --popover-foreground: #edf2f7;
-  --primary: #6da8ff;
-  --primary-foreground: #061528;
-  --secondary: #202a36;
-  --secondary-foreground: #d8e1ec;
-  --muted: #19212b;
-  --muted-foreground: #9aa8b8;
-  --accent: #42d3bd;
-  --accent-foreground: #052f2b;
-  --destructive: #ff6b6b;
-  --destructive-foreground: #1d0b0b;
-  --border: #263241;
-  --input: #2b3645;
-  --ring: #6da8ff;
+  --background: #090b10;
+  --foreground: #f2f5f8;
+  --card: #11141b;
+  --card-foreground: #f2f5f8;
+  --popover: #151922;
+  --popover-foreground: #f2f5f8;
+  --primary: #7b9dff;
+  --primary-foreground: #061022;
+  --secondary: #1d2430;
+  --secondary-foreground: #dce5ef;
+  --muted: #171c25;
+  --muted-foreground: #a3adbb;
+  --accent: #2dd4bf;
+  --accent-foreground: #041f1d;
+  --destructive: #ff5f7a;
+  --destructive-foreground: #24070d;
+  --border: #2a3240;
+  --input: #303948;
+  --ring: #7b9dff;
 }
 
 * {
@@ -104,12 +104,13 @@ select {
 }
 
 .hero-scene {
-  background: #0d1117;
+  background: #090b10;
 }
 
 .workspace-shell {
   background:
     radial-gradient(circle at 8% 0%, color-mix(in oklab, var(--primary) 12%, transparent) 0, transparent 28rem),
+    radial-gradient(circle at 96% 8%, color-mix(in oklab, var(--accent) 8%, transparent) 0, transparent 24rem),
     linear-gradient(180deg, color-mix(in oklab, var(--card) 52%, var(--background)) 0, var(--background) 260px),
     var(--background);
 }

@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { Home, Layers3, LogOut, Menu, Plus, Settings, Sparkles } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from '@/lib/toast'
@@ -18,6 +18,9 @@ export const AppLayout = () => {
   const [open, setOpen] = useState(false)
   const { profile, logout } = useAuth()
   const navigate = useNavigate()
+  const displayName = profile?.name?.trim() || profile?.email || 'AIFlow user'
+  const displayEmail = profile?.email ?? 'Profile not loaded'
+  const initial = displayName.slice(0, 1).toUpperCase()
 
   useEffect(() => {
     if (profile && !profile.name?.trim()) {
@@ -34,7 +37,7 @@ export const AppLayout = () => {
   const sidebar = (
     <aside className="flex h-full w-72 flex-col border-r bg-card/95">
       <div className="flex h-16 items-center gap-3 border-b px-5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
+        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm shadow-primary/20">
           <Sparkles className="h-4 w-4" />
         </div>
         <div>
@@ -64,7 +67,24 @@ export const AppLayout = () => {
           )
         })}
       </nav>
-      <div className="border-t p-3">
+      <div className="space-y-3 border-t p-3">
+        <Link
+          to="/app/settings"
+          onClick={() => setOpen(false)}
+          className="flex items-center gap-3 rounded-lg border bg-background/70 p-3 transition hover:border-primary/35 hover:bg-muted/60"
+        >
+          {profile?.avatar_url ? (
+            <img src={profile.avatar_url} alt="" className="h-10 w-10 rounded-md object-cover" />
+          ) : (
+            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-sm font-semibold text-primary">
+              {initial}
+            </div>
+          )}
+          <div className="min-w-0">
+            <div className="truncate text-sm font-semibold">{displayName}</div>
+            <div className="truncate text-xs text-muted-foreground">{displayEmail}</div>
+          </div>
+        </Link>
         <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
           <LogOut className="h-4 w-4" />
           Logout
@@ -101,10 +121,10 @@ export const AppLayout = () => {
                 <img src={profile.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" />
               ) : (
                 <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-semibold">
-                  {(profile?.name ?? profile?.email ?? 'U').slice(0, 1).toUpperCase()}
+                  {initial}
                 </div>
               )}
-              <div className="max-w-40 truncate text-sm">{profile?.name ?? profile?.email}</div>
+              <div className="max-w-40 truncate text-sm">{displayName}</div>
             </div>
           </div>
         </header>
