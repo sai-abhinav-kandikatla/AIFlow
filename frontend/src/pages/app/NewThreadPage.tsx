@@ -23,7 +23,7 @@ const methodCopy: Record<InputMethod, { title: string; description: string }> = 
   },
   raw_text: {
     title: 'Capture from raw text',
-    description: 'Paste a chat log with messy speaker turns and let AIFlow structure the state.',
+    description: 'Paste a chat log with messy speaker turns and let AI Flow structure the state.',
   },
   manual_description: {
     title: 'Describe the Flow manually',

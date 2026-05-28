@@ -19,16 +19,16 @@ export const AuthShell = ({
         <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
           <Sparkles className="h-4 w-4" />
         </div>
-        AIFlow
+        AI Flow
       </Link>
       <div className="max-w-xl">
-        <h1 className="text-5xl font-semibold leading-tight">Move the useful context, not the noise</h1>
+        <h1 className="text-5xl font-semibold leading-tight">The AI Workflow Operating System</h1>
         <p className="mt-5 text-lg leading-8 text-slate-300">
-          Capture the complete context of an active AI conversation and move it into the model best suited for the next step.
+          Build agents, automate workflows, and collaborate with AI tools in one intelligent workspace.
         </p>
       </div>
       <div className="grid gap-3">
-        {['Flow context', 'Settled decisions', 'Current state', 'Next milestone', 'Model handoff'].map((model) => (
+        {['AI agents', 'Workflow canvas', 'Files and memory', 'Model routing', 'Execution history'].map((model) => (
           <div key={model} className="flex items-center justify-between rounded-md border border-white/10 bg-white/[0.04] px-4 py-3">
             <span className="text-sm">{model}</span>
             <span className="h-2 w-20 rounded bg-accent/70" />
@@ -44,7 +44,7 @@ export const AuthShell = ({
         <div className="mb-6 text-center lg:hidden">
           <Link to="/" className="inline-flex items-center gap-2 font-semibold">
             <Sparkles className="h-5 w-5 text-primary" />
-            AIFlow
+            AI Flow
           </Link>
         </div>
         <Card className="p-6">

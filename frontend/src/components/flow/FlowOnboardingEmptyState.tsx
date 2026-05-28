@@ -6,18 +6,18 @@ import { cn } from '@/lib/utils'
 const onboardingSteps = [
   {
     icon: ScanText,
-    title: 'Capture Context',
-    text: 'Paste a chat log, upload a .txt/.json export, or submit a shared link from work you already started.',
+    title: 'Create',
+    text: 'Start from a chat log, file export, shared link, manual brief, or blank AI workflow.',
   },
   {
     icon: GitBranch,
-    title: 'Map the Flow',
-    text: 'The Gemini engine structures core goals, settled decisions, project state, and the next useful milestone.',
+    title: 'Automate',
+    text: 'AI Flow maps objectives, settled decisions, project state, next actions, and model-specific execution paths.',
   },
   {
     icon: Braces,
-    title: 'Model Handoff',
-    text: 'Copy customized continuation prompts optimized for Claude, ChatGPT, DeepSeek, Gemini, and Grok.',
+    title: 'Scale',
+    text: 'Copy model handoffs, reuse the Flow, and move work across Claude, ChatGPT, DeepSeek, Gemini, and Grok.',
   },
 ]
 
@@ -29,9 +29,9 @@ export const FlowOnboardingEmptyState = ({ className }: { className?: string }) 
           <div className="mb-4 inline-flex rounded-md border bg-muted px-3 py-1 text-xs font-semibold uppercase text-muted-foreground">
             Workspace setup
           </div>
-          <h2 className="text-2xl font-semibold tracking-tight">Start your first AI Flow</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">Start your first AI workflow</h2>
           <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">
-            Capture complete conversational context once, then move the work into any LLM without starting from scratch.
+            Build a reusable operating layer for agents, files, context, and model handoffs instead of restarting work in every AI tab.
           </p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">

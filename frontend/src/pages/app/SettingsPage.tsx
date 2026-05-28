@@ -77,7 +77,7 @@ export const SettingsPage = () => {
   }
 
   const removeAccount = async () => {
-    if (!window.confirm('Delete your AIFlow profile and all saved Flows?')) return
+    if (!window.confirm('Delete your AI Flow profile and all saved Flows?')) return
     setDeleting(true)
     try {
       await deleteAccount()
@@ -135,7 +135,7 @@ export const SettingsPage = () => {
         <Card>
           <CardHeader>
             <CardTitle>Profile & workspace identity</CardTitle>
-            <CardDescription>Keep your AIFlow workspace recognizable across sessions and billing.</CardDescription>
+            <CardDescription>Keep your AI Flow workspace recognizable across sessions and billing.</CardDescription>
           </CardHeader>
           <CardContent>
             <form className="space-y-4" onSubmit={saveProfile}>
@@ -231,7 +231,7 @@ export const SettingsPage = () => {
               <AlertTriangle className="h-5 w-5 text-destructive" />
               Delete account
             </CardTitle>
-            <CardDescription>This removes your AIFlow profile, saved Flows, and generated model handoffs.</CardDescription>
+            <CardDescription>This removes your AI Flow profile, saved Flows, and generated model handoffs.</CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="destructive" onClick={removeAccount} disabled={deleting}>

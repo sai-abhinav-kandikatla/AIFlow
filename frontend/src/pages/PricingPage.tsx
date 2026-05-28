@@ -46,7 +46,7 @@ const plans = [
     name: 'Free',
     tier: 'free',
     price: '$0',
-    description: 'For validating AIFlow with a few cross-model transfers.',
+    description: 'For validating AI Flow with a few cross-model transfers.',
     featured: false,
     features: ['5 AI Flows/month', 'Core Model Handoffs', 'Flow Studio'],
   },
@@ -157,7 +157,7 @@ export const PricingPage = () => {
       await refreshProfile()
       toast.success({
         title: 'Plan upgraded',
-        message: 'Razorpay verified your payment and refreshed your AIFlow limits.',
+        message: 'Razorpay verified your payment and refreshed your AI Flow limits.',
       })
       navigate('/app/settings')
     } catch (error) {
@@ -177,7 +177,7 @@ export const PricingPage = () => {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-8">
           <Link to="/" className="flex items-center gap-3 font-semibold">
             <Sparkles className="h-5 w-5 text-primary" />
-            AIFlow
+            AI Flow
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -197,7 +197,7 @@ export const PricingPage = () => {
         <div className="max-w-2xl">
           <h1 className="text-4xl font-semibold md:text-5xl">Plans for every AI Flow volume</h1>
           <p className="mt-4 text-lg leading-8 text-muted-foreground">
-            Upgrade with Razorpay Checkout for recurring subscriptions, invoices, and cancellation from AIFlow settings.
+            Upgrade with Razorpay Checkout for recurring subscriptions, invoices, and cancellation from AI Flow settings.
           </p>
         </div>
         <div className="mt-10 grid gap-4 md:grid-cols-4">

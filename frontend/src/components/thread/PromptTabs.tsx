@@ -28,7 +28,7 @@ export const PromptTabs = ({
 
   const copyThread = async (prompt: GeneratedPrompt) => {
     const text = [
-      `AIFlow bridge for ${prompt.model_name}`,
+      `AI Flow bridge for ${prompt.model_name}`,
       '',
       `Title: ${thread.title}`,
       `Current Strategic Objective: ${thread.goal}`,
