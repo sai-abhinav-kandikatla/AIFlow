@@ -21,6 +21,13 @@ const pageTitleForPath = (pathname: string) => {
   return 'AI Flow'
 }
 
+const isNavItemActive = (href: string, pathname: string) => {
+  if (href === '/app') return pathname === '/app'
+  if (href === '/app/threads/new') return pathname.startsWith('/app/threads/new')
+  if (href === '/app/threads') return pathname.startsWith('/app/threads') && !pathname.startsWith('/app/threads/new')
+  return pathname.startsWith(href)
+}
+
 export const AppLayout = () => {
   const [open, setOpen] = useState(false)
   const { profile } = useAuth()
@@ -71,17 +78,18 @@ export const AppLayout = () => {
       <nav className="flex-1 space-y-1 p-3">
         {navItems.map((item, index) => {
           const Icon = item.icon
+          const active = isNavItemActive(item.href, location.pathname)
           return (
             <NavLink
               key={item.label}
               to={item.href}
               end={item.end}
               onClick={() => setOpen(false)}
-              className={({ isActive }) =>
+              className={() =>
                 cn(
                   'animate-slide-in-left flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground',
                   `stagger-${Math.min(index + 1, 5)}`,
-                  isActive && 'bg-primary/10 text-primary',
+                  active && 'bg-primary/10 text-primary',
                 )
               }
             >
@@ -141,15 +149,16 @@ export const AppLayout = () => {
         <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-border/70 bg-background/95 p-2 backdrop-blur lg:hidden">
           {navItems.map((item) => {
             const Icon = item.icon
+            const active = isNavItemActive(item.href, location.pathname)
             return (
               <NavLink
                 key={item.label}
                 to={item.href}
                 end={item.end}
-                className={({ isActive }) =>
+                className={() =>
                   cn(
                     'flex flex-col items-center gap-1 rounded-lg px-2 py-2 text-xs text-muted-foreground',
-                    isActive && 'bg-primary/10 text-primary',
+                    active && 'bg-primary/10 text-primary',
                   )
                 }
               >
