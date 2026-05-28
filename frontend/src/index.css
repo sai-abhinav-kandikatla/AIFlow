@@ -22,54 +22,59 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans: Inter, Geist, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
 :root {
   color-scheme: light;
-  --background: #f7f8fb;
-  --foreground: #101318;
+  --background: #fafafa;
+  --foreground: #0f1117;
   --card: #ffffff;
-  --card-foreground: #101318;
+  --card-foreground: #0f1117;
   --popover: #ffffff;
-  --popover-foreground: #101318;
-  --primary: #3157ff;
+  --popover-foreground: #0f1117;
+  --primary: #2563eb;
   --primary-foreground: #ffffff;
-  --secondary: #eef1f7;
-  --secondary-foreground: #242936;
-  --muted: #eef1f6;
-  --muted-foreground: #636b7a;
-  --accent: #0ea58f;
-  --accent-foreground: #ecfffb;
-  --destructive: #d9344e;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #1e293b;
+  --muted: #f8fafc;
+  --muted-foreground: #64748b;
+  --accent: #0ea5e9;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #dde3ee;
-  --input: #d9e0ec;
-  --ring: #3157ff;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #2563eb;
+  --sidebar: #ffffff;
+  --sidebar-border: #f1f5f9;
+  --radius: 0.625rem;
 }
 
 .dark {
   color-scheme: dark;
-  --background: #090b10;
-  --foreground: #f2f5f8;
-  --card: #11141b;
-  --card-foreground: #f2f5f8;
-  --popover: #151922;
-  --popover-foreground: #f2f5f8;
-  --primary: #7b9dff;
-  --primary-foreground: #061022;
-  --secondary: #1d2430;
-  --secondary-foreground: #dce5ef;
-  --muted: #171c25;
-  --muted-foreground: #a3adbb;
-  --accent: #2dd4bf;
-  --accent-foreground: #041f1d;
-  --destructive: #ff5f7a;
-  --destructive-foreground: #24070d;
-  --border: #2a3240;
-  --input: #303948;
-  --ring: #7b9dff;
+  --background: #080c14;
+  --foreground: #f0f4f8;
+  --card: #0d1117;
+  --card-foreground: #f0f4f8;
+  --popover: #111827;
+  --popover-foreground: #f0f4f8;
+  --primary: #60a5fa;
+  --primary-foreground: #0a1628;
+  --secondary: #161f2e;
+  --secondary-foreground: #cbd5e1;
+  --muted: #111827;
+  --muted-foreground: #94a3b8;
+  --accent: #38bdf8;
+  --accent-foreground: #041824;
+  --destructive: #f87171;
+  --destructive-foreground: #2d0a0a;
+  --border: #1e2a3a;
+  --input: #1e2a3a;
+  --ring: #60a5fa;
+  --sidebar: #0a0f1a;
+  --sidebar-border: #141c28;
 }
 
 * {
@@ -100,31 +105,29 @@ select {
 }
 
 ::selection {
-  background: color-mix(in oklab, var(--primary) 32%, transparent);
+  background: color-mix(in oklab, var(--primary) 28%, transparent);
 }
 
 .hero-scene {
-  background: #090b10;
+  background: #080c14;
 }
 
 .workspace-shell {
   background:
-    radial-gradient(circle at 8% 0%, color-mix(in oklab, var(--primary) 12%, transparent) 0, transparent 28rem),
-    radial-gradient(circle at 96% 8%, color-mix(in oklab, var(--accent) 8%, transparent) 0, transparent 24rem),
-    linear-gradient(180deg, color-mix(in oklab, var(--card) 52%, var(--background)) 0, var(--background) 260px),
+    linear-gradient(180deg, color-mix(in oklab, var(--card) 58%, var(--background)) 0, var(--background) 260px),
     var(--background);
 }
 
 .surface-grid {
   background-image:
-    linear-gradient(color-mix(in oklab, var(--border) 46%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in oklab, var(--border) 46%, transparent) 1px, transparent 1px);
+    linear-gradient(color-mix(in oklab, var(--border) 38%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklab, var(--border) 38%, transparent) 1px, transparent 1px);
   background-size: 44px 44px;
 }
 
 .glass-panel {
-  border: 1px solid color-mix(in oklab, var(--border) 82%, transparent);
-  background: color-mix(in oklab, var(--card) 82%, transparent);
+  border: 1px solid color-mix(in oklab, var(--border) 78%, transparent);
+  background: color-mix(in oklab, var(--card) 86%, transparent);
   backdrop-filter: blur(18px);
 }
 
@@ -132,11 +135,13 @@ select {
   transition:
     transform 180ms ease,
     border-color 180ms ease,
-    background 180ms ease;
+    background-color 180ms ease,
+    box-shadow 180ms ease;
 }
 
 .lift:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
+  box-shadow: 0 16px 42px color-mix(in oklab, var(--foreground) 7%, transparent);
 }
 
 .toast-countdown {
@@ -152,5 +157,118 @@ select {
 
   to {
     transform: scaleX(0);
+  }
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fade-slide-up {
+  animation: fadeSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s ease both;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.stagger-1 {
+  animation-delay: 0.05s;
+}
+
+.stagger-2 {
+  animation-delay: 0.1s;
+}
+
+.stagger-3 {
+  animation-delay: 0.15s;
+}
+
+.stagger-4 {
+  animation-delay: 0.2s;
+}
+
+.stagger-5 {
+  animation-delay: 0.25s;
+}
+
+button,
+a,
+[role="button"] {
+  transition:
+    opacity 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+button:active:not(:disabled),
+a:active {
+  transform: scale(0.98);
+}
+
+[data-radix-tabs-content] {
+  animation: fadeSlideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }

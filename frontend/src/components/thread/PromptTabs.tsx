@@ -1,4 +1,5 @@
-import { Clipboard, WandSparkles } from 'lucide-react'
+import { useState } from 'react'
+import { Check, Clipboard, WandSparkles } from 'lucide-react'
 import { toast } from '@/lib/toast'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,6 +14,14 @@ const modelNotes: Record<GeneratedPrompt['model_name'], string> = {
   Grok: 'Concise handoff prompt with direct framing and assumption checks.',
 }
 
+const modelStyles: Record<GeneratedPrompt['model_name'], string> = {
+  ChatGPT: 'bg-emerald-500',
+  Claude: 'bg-orange-500',
+  Gemini: 'bg-blue-500',
+  DeepSeek: 'bg-teal-500',
+  Grok: 'bg-purple-500',
+}
+
 export const PromptTabs = ({
   thread,
   prompts,
@@ -25,6 +34,7 @@ export const PromptTabs = ({
   regenerating?: boolean
 }) => {
   const first = prompts[0]?.model_name ?? 'ChatGPT'
+  const [copied, setCopied] = useState<string | null>(null)
 
   const copyThread = async (prompt: GeneratedPrompt) => {
     const text = [
@@ -49,16 +59,18 @@ export const PromptTabs = ({
     ].join('\n')
 
     await navigator.clipboard.writeText(text)
+    setCopied(prompt.model_name)
+    window.setTimeout(() => setCopied(null), 2000)
     toast.success(`${prompt.model_name} handoff prompt copied`)
   }
 
   return (
-    <Card>
+    <Card className="animate-scale-in rounded-2xl">
       <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <CardTitle>Model Handoffs</CardTitle>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Choose a destination model and copy a custom instruction set designed for that model's response style.
+          <CardTitle className="tracking-tight">Model Handoffs</CardTitle>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            Choose a destination model and copy a ready-to-paste continuation prompt.
           </p>
         </div>
         {onRegenerate ? (
@@ -66,37 +78,44 @@ export const PromptTabs = ({
             variant="outline"
             onClick={onRegenerate}
             disabled={regenerating}
-            title="Refine Flow Configuration"
-            aria-label="Refine Flow Configuration"
+            title="Refine handoff prompts"
+            aria-label="Refine handoff prompts"
+            className="rounded-xl"
           >
             <WandSparkles className={regenerating ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
-            Refine Flow
+            Refine Prompts
           </Button>
         ) : null}
       </CardHeader>
       <CardContent>
         <Tabs defaultValue={first}>
-          <TabsList className="flex w-full flex-wrap justify-start gap-1">
+          <TabsList className="flex w-full flex-wrap justify-start gap-2 border-0 bg-transparent p-0">
             {prompts.map((prompt) => (
-              <TabsTrigger key={prompt.model_name} value={prompt.model_name}>
+              <TabsTrigger
+                key={prompt.model_name}
+                value={prompt.model_name}
+                className="rounded-full border bg-background px-3 py-2 aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+              >
+                <span className={`h-2 w-2 rounded-full ${modelStyles[prompt.model_name]}`} />
                 {prompt.model_name}
               </TabsTrigger>
             ))}
           </TabsList>
           {prompts.map((prompt) => (
-            <TabsContent key={prompt.model_name} value={prompt.model_name}>
+            <TabsContent key={prompt.model_name} value={prompt.model_name} className="animate-fade-slide-up mt-4">
               <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <p className="text-sm text-muted-foreground">{modelNotes[prompt.model_name]}</p>
+                <p className="text-sm leading-6 text-muted-foreground">{modelNotes[prompt.model_name]}</p>
                 <Button
                   onClick={() => copyThread(prompt)}
-                  title={`Copy a ${prompt.model_name} handoff prompt with custom instructions designed for that model's architecture.`}
-                  aria-label={`Copy ${prompt.model_name} Handoff Prompt`}
+                  title={`Copy a ${prompt.model_name} handoff prompt.`}
+                  aria-label={`Copy ${prompt.model_name} prompt`}
+                  className="rounded-xl"
                 >
-                  <Clipboard className="h-4 w-4" />
-                  Copy Handoff Prompt
+                  {copied === prompt.model_name ? <Check className="h-4 w-4 text-emerald-500" /> : <Clipboard className="h-4 w-4" />}
+                  {copied === prompt.model_name ? 'Copied!' : 'Copy Prompt'}
                 </Button>
               </div>
-              <pre className="max-h-[440px] overflow-auto rounded-lg border bg-background p-4 text-sm leading-6 whitespace-pre-wrap text-foreground">
+              <pre className="max-h-[440px] overflow-auto whitespace-pre-wrap rounded-2xl border bg-muted/40 p-4 font-mono text-sm leading-6 text-foreground shadow-inner">
                 {prompt.prompt_text}
               </pre>
             </TabsContent>

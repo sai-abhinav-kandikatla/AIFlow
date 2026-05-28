@@ -1,66 +1,62 @@
-import { ArrowRight, CheckCircle2, Goal, MapPinned, Tags } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { Thread } from '@/lib/types'
 
+const Section = ({
+  label,
+  children,
+  className,
+}: {
+  label: string
+  children: React.ReactNode
+  className?: string
+}) => (
+  <div className={`border-l-2 border-primary/25 pl-4 ${className ?? ''}`}>
+    <p className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
+    <div className="text-sm leading-relaxed text-foreground">{children}</div>
+  </div>
+)
+
 export const ThreadCard = ({ thread }: { thread: Thread }) => (
-  <Card className="overflow-hidden">
-    <CardHeader className="border-b bg-muted/25">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div>
-          <div className="text-sm font-medium text-muted-foreground">Flow Summary</div>
-          <CardTitle className="mt-2 text-2xl leading-tight md:text-3xl">{thread.title}</CardTitle>
-        </div>
-        <div className="flex max-w-xl flex-wrap gap-2">
+  <Card className="animate-scale-in overflow-hidden rounded-2xl">
+    <CardHeader className="pb-4">
+      {thread.tags.length > 0 ? (
+        <div className="mb-3 flex flex-wrap gap-2">
           {thread.tags.map((tag) => (
-            <Badge key={tag}>{tag}</Badge>
+            <span key={tag} className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+              {tag}
+            </span>
           ))}
         </div>
-      </div>
+      ) : null}
+      <CardTitle className="text-2xl leading-tight tracking-tight">{thread.title}</CardTitle>
     </CardHeader>
-    <CardContent className="grid gap-4 p-5 lg:grid-cols-2">
-      <section className="rounded-lg border bg-background/80 p-4">
-        <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
-          <Goal className="h-4 w-4 text-primary" />
-          Current Strategic Objective
-        </div>
-        <p className="text-sm leading-6 text-muted-foreground">{thread.goal}</p>
-      </section>
-      <section className="rounded-lg border bg-background/80 p-4">
-        <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
-          <MapPinned className="h-4 w-4 text-accent" />
-          Current State
-        </div>
-        <p className="text-sm leading-6 text-muted-foreground">{thread.last_point}</p>
-      </section>
-      <section className="rounded-lg border bg-background/80 p-4">
-        <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
-          <CheckCircle2 className="h-4 w-4 text-primary" />
-          Settled Decisions
-        </div>
-        <ul className="space-y-2 text-sm leading-6 text-muted-foreground">
-          {thread.key_decisions.map((decision) => (
-            <li key={decision} className="flex gap-2">
-              <span className="mt-2 h-1.5 w-1.5 rounded-full bg-primary" />
-              <span>{decision}</span>
-            </li>
-          ))}
+    <CardContent className="grid gap-6 pt-0 lg:grid-cols-2">
+      <Section label="Goal" className="animate-fade-slide-up stagger-1">
+        {thread.goal}
+      </Section>
+      <Section label="Current State" className="animate-fade-slide-up stagger-2">
+        {thread.last_point}
+      </Section>
+      <Section label="Decisions" className="animate-fade-slide-up stagger-3">
+        <ul className="space-y-2">
+          {thread.key_decisions.length > 0 ? (
+            thread.key_decisions.map((decision) => (
+              <li key={decision} className="flex gap-2">
+                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                <span>{decision}</span>
+              </li>
+            ))
+          ) : (
+            <li className="text-muted-foreground">No explicit decisions were detected.</li>
+          )}
         </ul>
-      </section>
-      <section className="rounded-lg border bg-background/80 p-4">
-        <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
-          <ArrowRight className="h-4 w-4 text-accent" />
-          Next Milestone
-        </div>
-        <p className="text-sm leading-6 text-muted-foreground">{thread.next_step}</p>
-      </section>
-      <section className="rounded-lg border bg-background/80 p-4 lg:col-span-2">
-        <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
-          <Tags className="h-4 w-4 text-primary" />
-          Flow Context
-        </div>
-        <p className="text-sm leading-6 text-muted-foreground">{thread.context}</p>
-      </section>
+      </Section>
+      <Section label="Next Step" className="animate-fade-slide-up stagger-4">
+        {thread.next_step}
+      </Section>
+      <Section label="Context" className="animate-fade-slide-up stagger-5 lg:col-span-2">
+        <p className="text-muted-foreground">{thread.context}</p>
+      </Section>
     </CardContent>
   </Card>
 )
