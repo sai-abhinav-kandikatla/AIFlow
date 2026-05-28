@@ -50,6 +50,16 @@ const serializeProfile = (profile: {
   subscription_current_period_end: profile.subscriptionCurrentPeriodEnd ?? null
 });
 
+const profileSelect = {
+  id: true,
+  email: true,
+  name: true,
+  avatarUrl: true,
+  plan: true,
+  subscriptionStatus: true,
+  subscriptionCurrentPeriodEnd: true
+} as const;
+
 router.post(
   "/signup",
   asyncHandler(async (req, res) => {
@@ -82,7 +92,8 @@ router.post(
         update: {
           email: data.user.email,
           name: body.name ?? undefined
-        }
+        },
+        select: { id: true }
       });
     }
 
@@ -125,7 +136,8 @@ router.post(
         email: data.user.email,
         name: metadata.name ?? metadata.full_name ?? undefined,
         avatarUrl: metadata.avatar_url ?? metadata.picture ?? undefined
-      }
+      },
+      select: profileSelect
     });
 
     res.json({
@@ -182,7 +194,8 @@ router.patch(
       data: {
         name: body.name,
         avatarUrl: body.avatar_url === "" ? null : body.avatar_url
-      }
+      },
+      select: profileSelect
     });
 
     res.json({ user: serializeProfile(updated) });
@@ -201,7 +214,8 @@ router.delete(
     }
 
     await prisma.user.delete({
-      where: { id: req.auth!.user.id }
+      where: { id: req.auth!.user.id },
+      select: { id: true }
     });
 
     res.status(204).send();

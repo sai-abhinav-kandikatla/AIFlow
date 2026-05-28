@@ -33,6 +33,18 @@ export const readBearerToken = (req: Request) => {
   return header.slice("Bearer ".length).trim();
 };
 
+const authProfileSelect = {
+  id: true,
+  email: true,
+  name: true,
+  avatarUrl: true,
+  plan: true,
+  paymentCustomerId: true,
+  paymentSubscriptionId: true,
+  subscriptionStatus: true,
+  subscriptionCurrentPeriodEnd: true
+} as const;
+
 export const requireAuth = async (req: Request, _res: Response, next: NextFunction) => {
   let stage = "reading the bearer token";
 
@@ -52,7 +64,8 @@ export const requireAuth = async (req: Request, _res: Response, next: NextFuncti
             name: "AIFlow Dev",
             plan: "FREE"
           },
-          update: {}
+          update: {},
+          select: authProfileSelect
         });
         req.auth = {
           token,
@@ -83,7 +96,8 @@ export const requireAuth = async (req: Request, _res: Response, next: NextFuncti
     stage = "syncing your AIFlow profile";
     const metadata = data.user.user_metadata ?? {};
     const existingProfile = await prisma.user.findUnique({
-      where: { id: data.user.id }
+      where: { id: data.user.id },
+      select: { name: true }
     });
 
     const profile = await prisma.user.upsert({
@@ -99,7 +113,8 @@ export const requireAuth = async (req: Request, _res: Response, next: NextFuncti
         email: data.user.email,
         name: existingProfile?.name ?? undefined,
         avatarUrl: metadata.avatar_url ?? metadata.picture ?? undefined
-      }
+      },
+      select: authProfileSelect
     });
 
     req.auth = {
