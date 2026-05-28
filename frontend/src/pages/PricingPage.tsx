@@ -48,7 +48,7 @@ const plans = [
     price: '$0',
     description: 'For validating AIFlow with a few cross-model transfers.',
     featured: false,
-    features: ['5 Flows/month', 'Core handoffs', 'Flow Studio'],
+    features: ['5 AI Flows/month', 'Core Model Handoffs', 'Flow Studio'],
   },
   {
     name: 'Starter',
@@ -56,7 +56,7 @@ const plans = [
     price: '$1',
     description: 'For students and builders who need more Flow volume.',
     featured: true,
-    features: ['20 Flows/month', 'All model handoffs', 'Saved Flow Studio'],
+    features: ['20 AI Flows/month', 'All Model Handoffs', 'Saved Flow Studio'],
   },
   {
     name: 'Pro',
@@ -64,7 +64,7 @@ const plans = [
     price: '$9',
     description: 'For regular cross-model AI work and deeper handoff volume.',
     featured: false,
-    features: ['Unlimited Flows', 'All model handoffs', 'Priority processing'],
+    features: ['Unlimited AI Flows', 'All Model Handoffs', 'Priority processing'],
   },
   {
     name: 'Team',
@@ -72,7 +72,7 @@ const plans = [
     price: '$29',
     description: 'For shared workspaces and collaborative model handoffs.',
     featured: false,
-    features: ['Everything in Pro', 'Team workspace', 'Shared Flows'],
+    features: ['Everything in Pro', 'Team workspace', 'Shared AI Flows'],
   },
 ] as const
 
@@ -195,7 +195,7 @@ export const PricingPage = () => {
       </header>
       <main className="mx-auto max-w-7xl px-4 py-14 md:px-8">
         <div className="max-w-2xl">
-          <h1 className="text-4xl font-semibold md:text-5xl">Plans for every Flow volume</h1>
+          <h1 className="text-4xl font-semibold md:text-5xl">Plans for every AI Flow volume</h1>
           <p className="mt-4 text-lg leading-8 text-muted-foreground">
             Upgrade with Razorpay Checkout for recurring subscriptions, invoices, and cancellation from AIFlow settings.
           </p>

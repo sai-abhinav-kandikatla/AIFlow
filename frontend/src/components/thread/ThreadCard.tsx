@@ -22,7 +22,7 @@ export const ThreadCard = ({ thread }: { thread: Thread }) => (
       <section className="rounded-lg border bg-background/80 p-4">
         <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
           <Goal className="h-4 w-4 text-primary" />
-          Current Objective
+          Current Strategic Objective
         </div>
         <p className="text-sm leading-6 text-muted-foreground">{thread.goal}</p>
       </section>

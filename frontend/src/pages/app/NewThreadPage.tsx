@@ -15,7 +15,7 @@ import type { InputMethod, ManualThreadInput } from '@/lib/types'
 const methodCopy: Record<InputMethod, { title: string; description: string }> = {
   share_link: {
     title: 'Capture from share link',
-    description: 'Use a public ChatGPT or Claude share link to create a clean Flow bridge.',
+    description: 'Submit a public ChatGPT or Claude share link to preserve the complete conversation state.',
   },
   file_upload: {
     title: 'Capture from export',
@@ -23,7 +23,7 @@ const methodCopy: Record<InputMethod, { title: string; description: string }> = 
   },
   raw_text: {
     title: 'Capture from raw text',
-    description: 'Paste messy speaker turns and let AIFlow structure the state.',
+    description: 'Paste a chat log with messy speaker turns and let AIFlow structure the state.',
   },
   manual_description: {
     title: 'Describe the Flow manually',
@@ -76,7 +76,7 @@ export const NewThreadPage = () => {
     <div className="mx-auto max-w-5xl space-y-6">
       <div>
         <h1 className="text-3xl font-semibold">Capture Context</h1>
-        <p className="mt-2 text-muted-foreground">Bring in an AI conversation and generate model-ready Flow bridges.</p>
+        <p className="mt-2 text-muted-foreground">Ingest a conversation once and generate model-ready handoff blueprints for your next LLM.</p>
       </div>
 
       <Card>
@@ -98,7 +98,7 @@ export const NewThreadPage = () => {
                 </TabsTrigger>
                 <TabsTrigger value="raw_text">
                   <TextCursorInput className="h-4 w-4" />
-                  Raw context
+                  Chat log
                 </TabsTrigger>
                 <TabsTrigger value="manual_description">
                   <PenLine className="h-4 w-4" />
@@ -129,10 +129,10 @@ export const NewThreadPage = () => {
               </TabsContent>
 
               <TabsContent value="raw_text" className="space-y-2">
-                <Label htmlFor="raw-text">Conversation context</Label>
+                <Label htmlFor="raw-text">Chat log</Label>
                 <Textarea
                   id="raw-text"
-                  placeholder="User: ...&#10;Assistant: ..."
+                  placeholder="User: Paste the conversation here...&#10;Assistant: Include the relevant replies, decisions, and current state..."
                   className="min-h-72"
                   value={rawText}
                   onChange={(event) => setRawText(event.target.value)}
@@ -142,7 +142,7 @@ export const NewThreadPage = () => {
 
               <TabsContent value="manual_description" className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="working-on">Current objective</Label>
+                  <Label htmlFor="working-on">Current Strategic Objective</Label>
                   <Textarea
                     id="working-on"
                     value={manual.working_on}
@@ -183,11 +183,11 @@ export const NewThreadPage = () => {
             <div className="mt-6 flex flex-col gap-3 rounded-lg border bg-muted/40 p-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <div className="font-medium">Create an AI Flow</div>
-                <p className="mt-1 text-sm text-muted-foreground">Turn this context into a portable handoff for another AI platform.</p>
+                <p className="mt-1 text-sm text-muted-foreground">Turn this context into a portable handoff blueprint for another AI platform.</p>
               </div>
               <Button type="submit" size="lg" disabled={loading}>
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <WandSparkles className="h-4 w-4" />}
-                Map Flow
+                Map the Flow
               </Button>
             </div>
           </form>

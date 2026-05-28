@@ -7,9 +7,9 @@ import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 
 const features = [
-  { icon: LinkIcon, title: 'Context capture', text: 'Pull in public share links, transcripts, exports, or manual project state.' },
-  { icon: GitBranch, title: 'Flow mapping', text: 'Extract the objective, decisions, current state, and next milestone.' },
-  { icon: Braces, title: 'Model handoffs', text: 'Generate bridges tuned for ChatGPT, Claude, Gemini, DeepSeek, and Grok.' },
+  { icon: LinkIcon, title: 'Context capture', text: 'Pull in public share links, chat logs, exports, or manual project state.' },
+  { icon: GitBranch, title: 'Flow mapping', text: 'Extract the strategic objective, settled decisions, current state, and next milestone.' },
+  { icon: Braces, title: 'Model handoff blueprints', text: 'Generate handoff prompts tuned for ChatGPT, Claude, Gemini, DeepSeek, and Grok.' },
   { icon: Lock, title: 'Private workspace', text: 'Every Flow is saved to the signed-in user who created it.' },
 ]
 
@@ -20,9 +20,9 @@ const pricing = [
 ]
 
 const howSteps: { title: string; text: string; icon: LucideIcon }[] = [
-  { title: 'Capture Context', text: 'Add a share link, file export, raw transcript, or manual summary.', icon: ScanText },
-  { title: 'Map the Flow', text: 'AIFlow extracts the objective, settled decisions, current state, and next milestone.', icon: GitBranch },
-  { title: 'Model Handoff', text: 'Copy a bridge tailored to the model you want to use next.', icon: Braces },
+  { title: 'Capture Context', text: 'Paste a chat log, upload a .txt/.json export, or submit a shared link.', icon: ScanText },
+  { title: 'Map the Flow', text: 'The Gemini engine structures core goals, settled decisions, and project state.', icon: GitBranch },
+  { title: 'Model Handoff', text: 'Copy customized continuation prompts optimized for the target LLM.', icon: Braces },
 ]
 
 export const LandingPage = () => (
@@ -63,13 +63,13 @@ export const LandingPage = () => (
       <div className="relative mx-auto flex min-h-[656px] max-w-7xl items-center px-4 py-16 md:px-8">
         <div className="max-w-3xl">
           <Badge className="border-white/20 bg-white/10 text-white">AI context mobility platform</Badge>
-          <h1 className="mt-6 max-w-3xl text-5xl font-semibold leading-tight md:text-7xl">Move any AI conversation to the right model.</h1>
+          <h1 className="mt-6 max-w-3xl text-5xl font-semibold leading-tight md:text-7xl">Move Your AI Conversations Seamlessly Between Models.</h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
-            AIFlow captures your chat, maps the objective, decisions, and next step, then creates model-ready handoffs for ChatGPT, Claude, Gemini, DeepSeek, and Grok.
+            Capture the complete context of any chat log and instantly generate optimized handoff blueprints for Claude, ChatGPT, DeepSeek, and Gemini. Never start from scratch again.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link to="/signup" className={buttonVariants({ size: 'lg' })}>
-              Create Your First Flow
+              Capture Context Free
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link to="/pricing" className={buttonVariants({ variant: 'outline', size: 'lg', className: 'border-white/20 bg-white/5 text-white hover:bg-white/10' })}>
@@ -89,7 +89,7 @@ export const LandingPage = () => (
               <span className="text-xs text-slate-400">Flow bridge preview</span>
             </div>
             <div className="grid gap-3 pt-4">
-              {['Capture context', 'Map decisions', 'Locate current state', 'Build model handoffs'].map((item, index) => (
+              {['Capture complete context', 'Map settled decisions', 'Locate project state', 'Build handoff blueprints'].map((item, index) => (
                 <div key={item} className="flex items-center gap-3 rounded-md border border-white/10 bg-white/[0.04] p-3">
                   <span className="flex h-7 w-7 items-center justify-center rounded bg-primary/25 text-xs">{index + 1}</span>
                   <span className="text-sm text-slate-200">{item}</span>
@@ -99,7 +99,7 @@ export const LandingPage = () => (
             </div>
           </div>
           <div className="ml-20 mt-5 rounded-lg border border-white/15 bg-slate-950/80 p-4 shadow-2xl">
-            <div className="text-sm font-medium text-slate-200">Handoff to Claude</div>
+            <div className="text-sm font-medium text-slate-200">Optimized handoff for Claude</div>
             <div className="mt-3 space-y-2">
               <div className="h-2 w-full rounded bg-white/15" />
               <div className="h-2 w-5/6 rounded bg-white/15" />

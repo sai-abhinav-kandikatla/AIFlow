@@ -24,7 +24,7 @@ export const AuthShell = ({
       <div className="max-w-xl">
         <h1 className="text-5xl font-semibold leading-tight">Move the useful context, not the noise</h1>
         <p className="mt-5 text-lg leading-8 text-slate-300">
-          Turn an active AI conversation into a clean Flow with the objective, decisions, and next milestone ready for any model.
+          Capture the complete context of an active AI conversation and move it into the model best suited for the next step.
         </p>
       </div>
       <div className="grid gap-3">

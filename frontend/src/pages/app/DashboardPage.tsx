@@ -48,20 +48,22 @@ export const DashboardPage = () => {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold">Dashboard</h1>
-          <p className="mt-2 text-muted-foreground">Your Flow volume, newest context maps, and model handoff coverage.</p>
+          <h1 className="max-w-3xl text-3xl font-semibold">Move Your AI Conversations Seamlessly Between Models.</h1>
+          <p className="mt-2 max-w-3xl text-muted-foreground">
+            Capture complete chat context and generate optimized handoff blueprints for Claude, ChatGPT, DeepSeek, Gemini, and Grok.
+          </p>
         </div>
         <Link to="/app/threads/new" className={buttonVariants()}>
           <Plus className="h-4 w-4" />
-          Create Flow
+          Capture Context
         </Link>
       </div>
 
       {monthlyLimit !== null && monthlyUsage >= monthlyLimit ? <UsageBanner count={monthlyUsage} limit={monthlyLimit} /> : null}
 
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard title="Total Flows created" value={threads.length} icon={Layers3} />
-        <StatCard title="Flows generated this month" value={monthlyUsage} icon={TrendingUp} />
+        <StatCard title="Total AI Flows created" value={threads.length} icon={Layers3} />
+        <StatCard title="Flows mapped this month" value={monthlyUsage} icon={TrendingUp} />
         <StatCard title="Model handoffs available" value="5" icon={Braces} />
       </div>
 

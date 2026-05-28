@@ -39,7 +39,7 @@ export const AppLayout = () => {
         </div>
         <div>
           <div className="text-sm font-semibold">AIFlow</div>
-          <div className="text-xs text-muted-foreground capitalize">{profile?.plan ?? 'free'} Flow workspace</div>
+          <div className="text-xs text-muted-foreground capitalize">{profile?.plan ?? 'free'} AI Flow workspace</div>
         </div>
       </div>
       <nav className="flex-1 space-y-1 p-3">
@@ -91,7 +91,7 @@ export const AppLayout = () => {
             </Button>
             <div>
               <div className="text-sm font-medium text-muted-foreground">Enterprise context workspace</div>
-              <div className="text-lg font-semibold">Move AI work without losing state</div>
+              <div className="text-lg font-semibold">Bridge AI work across models</div>
             </div>
           </div>
           <div className="flex items-center gap-2">

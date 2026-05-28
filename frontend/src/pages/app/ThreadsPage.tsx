@@ -61,11 +61,11 @@ export const ThreadsPage = () => {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-semibold">Flow Studio</h1>
-          <p className="mt-2 text-muted-foreground">Search, open, refine, or remove the AI Flows tied to your account.</p>
+          <p className="mt-2 text-muted-foreground">Switch between saved AI Flows, inspect context maps, and refine model handoffs.</p>
         </div>
         <Link to="/app/threads/new" className={buttonVariants()}>
           <Plus className="h-4 w-4" />
-          Create Flow
+          Capture Context
         </Link>
       </div>
 
@@ -96,7 +96,7 @@ export const ThreadsPage = () => {
           description="Create a new Flow or adjust your search and date filters."
           action={
             <Link to="/app/threads/new" className={buttonVariants()}>
-              Create Flow
+              Capture Context
             </Link>
           }
         />
