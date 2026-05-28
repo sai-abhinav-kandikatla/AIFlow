@@ -8,7 +8,7 @@ backend,GEMINI_MODEL,gemini-2.5-flash,Default Gemini model
 backend,SUPABASE_URL,https://wrpnzeexxqdvlecalvoq.supabase.co,Supabase project URL
 backend,SUPABASE_ANON_KEY,sb_publishable_-Qy9tXWyjLWppWqKFDwHMw_eEbmdwCI,Supabase public publishable key
 backend,SUPABASE_PUBLISHABLE_KEY,sb_publishable_-Qy9tXWyjLWppWqKFDwHMw_eEbmdwCI,Supabase publishable key alias
-backend,JWT_SECRET,generate-a-long-random-string,Required secret for production config
+backend,SUPABASE_SERVICE_ROLE_KEY,your-supabase-service-role-key,Required for server-side logout and account deletion
 backend,PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK,1,Prevents pooled Supabase migrations from hanging on advisory locks
 backend,RAZORPAY_KEY_ID,rzp_test_or_live_key_id,Razorpay API key id
 backend,RAZORPAY_KEY_SECRET,razorpay_key_secret,Razorpay API key secret

@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { z } from "zod";
 import { env, isSupabaseConfigured } from "../config/env.js";
-import { requireAuth } from "../middleware/auth.js";
+import { readBearerToken, requireAuth } from "../middleware/auth.js";
 import { prisma } from "../lib/prisma.js";
-import { supabase } from "../lib/supabase.js";
+import { supabase, supabaseAdmin } from "../lib/supabase.js";
 import { AppError } from "../utils/AppError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
@@ -137,8 +137,20 @@ router.post(
 
 router.post(
   "/logout",
-  requireAuth,
-  asyncHandler(async (_req, res) => {
+  asyncHandler(async (req, res) => {
+    const token = readBearerToken(req);
+
+    if (token && supabaseAdmin) {
+      try {
+        const { error } = await supabaseAdmin.auth.admin.signOut(token);
+        if (error) console.warn("Supabase admin sign-out failed.", error.message);
+      } catch (error) {
+        console.warn("Supabase admin sign-out failed.", error);
+      }
+    } else if (token) {
+      console.warn("SUPABASE_SERVICE_ROLE_KEY is not set; skipping server-side sign-out.");
+    }
+
     res.json({ ok: true });
   })
 );
@@ -181,6 +193,13 @@ router.delete(
   "/me",
   requireAuth,
   asyncHandler(async (req, res) => {
+    if (supabaseAdmin) {
+      const { error } = await supabaseAdmin.auth.admin.deleteUser(req.auth!.user.id);
+      if (error) throw new AppError(502, "Could not delete the Supabase auth user.");
+    } else {
+      console.warn("SUPABASE_SERVICE_ROLE_KEY is not set; deleting Prisma user only.");
+    }
+
     await prisma.user.delete({
       where: { id: req.auth!.user.id }
     });

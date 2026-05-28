@@ -23,6 +23,13 @@ const sanitizeErrorMessage = (value: unknown) => {
     .slice(0, 260);
 };
 
+const errorPayload = (statusCode: number, message: string, details?: unknown) => ({
+  error: {
+    message,
+    ...(!isProduction || statusCode < 500 ? { details } : {})
+  }
+});
+
 export const notFound: ErrorRequestHandler = (err, _req, res, _next) => {
   res.status(404).json({
     error: {
@@ -46,35 +53,27 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   }
 
   if (err instanceof AppError) {
-    return res.status(err.statusCode).json({
-      error: {
-        message: err.message,
-        details: err.details
-      }
-    });
+    return res.status(err.statusCode).json(errorPayload(err.statusCode, err.message, err.details));
   }
 
   if (isPrismaError(err)) {
-    return res.status(503).json({
-      error: {
-        message: "Database request failed. Check the Supabase DATABASE_URL/DIRECT_URL values and make sure migrations were applied.",
-        details: {
-          cause: sanitizeErrorMessage(err)
-        }
-      }
-    });
+    return res
+      .status(503)
+      .json(
+        errorPayload(
+          503,
+          "Database request failed. Check the Supabase DATABASE_URL/DIRECT_URL values and make sure migrations were applied.",
+          {
+            cause: sanitizeErrorMessage(err)
+          }
+        )
+      );
   }
 
   const statusCode = typeof err?.statusCode === "number" ? err.statusCode : 500;
-  return res.status(statusCode).json({
-    error: {
-      message: statusCode === 500 ? "Server error while processing the request." : err.message,
-      details:
-        statusCode === 500
-          ? { cause: sanitizeErrorMessage(err) }
-          : isProduction
-            ? undefined
-            : err?.stack
-    }
-  });
+  return res.status(statusCode).json(
+    errorPayload(statusCode, statusCode === 500 ? "Server error while processing the request." : err.message, {
+      cause: statusCode === 500 ? sanitizeErrorMessage(err) : err?.stack
+    })
+  );
 };

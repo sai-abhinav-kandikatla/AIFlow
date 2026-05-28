@@ -1,14 +1,28 @@
 import cors from "cors";
 import express from "express";
+import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import morgan from "morgan";
-import { env } from "./config/env.js";
+import { env, isProduction } from "./config/env.js";
 import authRoutes from "./routes/auth.js";
 import billingRoutes, { razorpayWebhook } from "./routes/billing.js";
 import threadRoutes from "./routes/threads.js";
 import { errorHandler } from "./middleware/error.js";
 
 const app = express();
+app.set("trust proxy", 1);
+
+if (isProduction && !env.FRONTEND_URL) {
+  throw new Error("FRONTEND_URL must be set in production. Refusing to start.");
+}
+
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60_000,
+  limit: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: { message: "Too many requests. Wait a few minutes, then try again." } }
+});
 
 const readSupabaseProjectRef = (value: string | undefined) => {
   if (!value) return null;
@@ -35,11 +49,18 @@ app.use(
   })
 );
 app.post("/api/billing/webhook", express.raw({ type: "application/json" }), razorpayWebhook);
+app.use(globalLimiter);
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
 
-const healthPayload = () => ({
+const healthPayload = () =>
+  isProduction
+    ? {
+        ok: true,
+        service: "aiflow-api"
+      }
+    : {
     ok: true,
     service: "aiflow-api",
     diagnostics: "razorpay-billing",
@@ -60,7 +81,7 @@ const healthPayload = () => ({
       razorpayTeamPlanId: Boolean(env.RAZORPAY_TEAM_PLAN_ID),
       frontendUrl: env.FRONTEND_URL
     }
-});
+};
 
 app.get("/health", (_req, res) => {
   res.json(healthPayload());

@@ -18,6 +18,8 @@ const supabaseAnonKey =
 
 const databaseUrl = process.env.AIFLOW_DATABASE_URL ?? process.env.SUPABASE_DATABASE_URL ?? process.env.DATABASE_URL;
 const directUrl = process.env.AIFLOW_DIRECT_URL ?? process.env.SUPABASE_DIRECT_URL ?? process.env.DIRECT_URL;
+const frontendUrl =
+  process.env.FRONTEND_URL ?? (process.env.NODE_ENV === "production" ? undefined : "http://localhost:5173");
 
 const databaseUrlSource = process.env.AIFLOW_DATABASE_URL
   ? "AIFLOW_DATABASE_URL"
@@ -38,12 +40,13 @@ const directUrlSource = process.env.AIFLOW_DIRECT_URL
 export const env = {
   NODE_ENV: process.env.NODE_ENV ?? "development",
   PORT: parsePort(process.env.PORT),
-  FRONTEND_URL: process.env.FRONTEND_URL ?? "http://localhost:5173",
+  FRONTEND_URL: frontendUrl,
   GEMINI_API_KEY: process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY,
   GEMINI_MODEL: process.env.GEMINI_MODEL ?? "gemini-2.5-flash",
   SUPABASE_URL: supabaseUrl,
   SUPABASE_ANON_KEY: supabaseAnonKey,
-  JWT_SECRET: process.env.JWT_SECRET,
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  // Auth is handled by Supabase JWT — no custom JWT signing needed
   DATABASE_URL: databaseUrl,
   DIRECT_URL: directUrl,
   DATABASE_URL_SOURCE: databaseUrlSource,
@@ -58,5 +61,6 @@ export const env = {
 
 export const isProduction = env.NODE_ENV === "production";
 export const isSupabaseConfigured = Boolean(env.SUPABASE_URL && env.SUPABASE_ANON_KEY);
+export const isSupabaseAdminConfigured = Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY);
 export const isGeminiConfigured = Boolean(env.GEMINI_API_KEY);
 export const isRazorpayConfigured = Boolean(env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET);

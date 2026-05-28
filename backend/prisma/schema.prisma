@@ -31,6 +31,8 @@ model User {
   paymentSubscriptionId         String?   @unique @map("stripe_subscription_id")
   subscriptionStatus            String?   @map("subscription_status")
   subscriptionCurrentPeriodEnd  DateTime? @map("subscription_current_period_end")
+  promptRegenerationsThisMonth  Int       @default(0) @map("prompt_regenerations_this_month")
+  promptRegenerationMonth       DateTime? @map("prompt_regeneration_month")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

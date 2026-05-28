@@ -1,16 +1,33 @@
 import { Router } from "express";
 import type { NextFunction, Request, Response } from "express";
+import rateLimit from "express-rate-limit";
 import multer from "multer";
 import { z } from "zod";
 import { InputMethod as PrismaInputMethod } from "../generated/prisma/enums.js";
 import { requireAuth } from "../middleware/auth.js";
 import { prisma } from "../lib/prisma.js";
 import { analyzeConversation, modelNames, regeneratePrompts } from "../services/gemini.js";
-import { InputMethod, normalizeInput } from "../services/inputParser.js";
+import { InputMethod, MAX_CONVERSATION_CHARS, normalizeInput } from "../services/inputParser.js";
 import { AppError } from "../utils/AppError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 const router = Router();
+
+const createThreadLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: { message: "Too many Flow creation attempts. Wait a minute, then try again." } }
+});
+
+const regenerateThreadLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: 3,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: { message: "Too many Flow refinement attempts. Wait a minute, then try again." } }
+});
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -107,6 +124,49 @@ const monthlyThreadLimit = (plan: string) =>
     STARTER: 20
   })[plan] ?? null;
 
+const monthlyRegenerationLimit = (plan: string) =>
+  ({
+    FREE: 15,
+    STARTER: 60
+  })[plan] ?? null;
+
+const enforceMonthlyRegenerationLimit = async (userId: string, plan: string) => {
+  const limit = monthlyRegenerationLimit(plan);
+  if (limit === null) return;
+
+  const currentMonth = monthStart();
+
+  await prisma.$transaction(async (tx) => {
+    const user = await tx.user.findUnique({
+      where: { id: userId },
+      select: {
+        promptRegenerationsThisMonth: true,
+        promptRegenerationMonth: true
+      }
+    });
+
+    if (!user) throw new AppError(404, "User profile not found.");
+
+    const isCurrentMonth = user.promptRegenerationMonth?.getTime() === currentMonth.getTime();
+    const regenerationCount = isCurrentMonth ? user.promptRegenerationsThisMonth : 0;
+
+    if (regenerationCount >= limit) {
+      throw new AppError(402, `You have reached your ${limit} monthly Flow refinement limit. Upgrade to continue.`, {
+        plan_limit_reached: true,
+        monthly_limit: limit
+      });
+    }
+
+    await tx.user.update({
+      where: { id: userId },
+      data: {
+        promptRegenerationMonth: currentMonth,
+        promptRegenerationsThisMonth: isCurrentMonth ? { increment: 1 } : 1
+      }
+    });
+  });
+};
+
 const prismaInputMethod = (method: InputMethod) =>
   ({
     share_link: PrismaInputMethod.SHARE_LINK,
@@ -165,6 +225,7 @@ router.get(
 
 router.post(
   "/create",
+  createThreadLimiter,
   optionalUpload,
   asyncHandler(async (req, res) => {
     let stage = "validating the input";
@@ -205,6 +266,13 @@ router.post(
         content,
         file: req.file ?? undefined
       });
+
+      if (normalizedConversation.length > MAX_CONVERSATION_CHARS) {
+        throw new AppError(
+          400,
+          "Conversation is too long. Paste under 200,000 characters or upload a trimmed file."
+        );
+      }
 
       stage = "analyzing the conversation";
       const analysis = await analyzeConversation(normalizedConversation);
@@ -285,9 +353,12 @@ router.delete(
 
 router.post(
   "/:id/regenerate",
+  regenerateThreadLimiter,
   asyncHandler(async (req, res) => {
     const id = routeId(req.params.id);
     const thread = await ensureThreadOwner(id, req.auth!.user.id);
+    await enforceMonthlyRegenerationLimit(req.auth!.user.id, req.auth!.user.plan);
+
     const prompts = await regeneratePrompts({
       title: thread.title,
       goal: thread.goal,

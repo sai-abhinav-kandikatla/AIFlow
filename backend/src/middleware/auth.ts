@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { env, isSupabaseConfigured } from "../config/env.js";
+import { env, isProduction, isSupabaseConfigured } from "../config/env.js";
 import { prisma } from "../lib/prisma.js";
 import { supabase } from "../lib/supabase.js";
 import { AppError } from "../utils/AppError.js";
@@ -27,7 +27,7 @@ declare global {
   }
 }
 
-const readBearerToken = (req: Request) => {
+export const readBearerToken = (req: Request) => {
   const header = req.headers.authorization;
   if (!header?.startsWith("Bearer ")) return null;
   return header.slice("Bearer ".length).trim();
@@ -43,7 +43,7 @@ export const requireAuth = async (req: Request, _res: Response, next: NextFuncti
     }
 
     if (!isSupabaseConfigured || !supabase) {
-      if (env.NODE_ENV === "development" && token === "dev-token") {
+      if (!isProduction && env.NODE_ENV === "development" && token === "dev-token") {
         const user = await prisma.user.upsert({
           where: { id: "00000000-0000-0000-0000-000000000001" },
           create: {

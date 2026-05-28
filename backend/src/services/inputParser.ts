@@ -1,3 +1,5 @@
+import { lookup } from "node:dns/promises";
+import type { LookupAddress } from "node:dns";
 import * as cheerio from "cheerio";
 import { AppError } from "../utils/AppError.js";
 import { compactWhitespace, truncate } from "../utils/text.js";
@@ -18,6 +20,8 @@ const ALLOWED_SHARE_HOSTS = new Set([
   "claude.ai",
   "www.claude.ai"
 ]);
+
+export const MAX_CONVERSATION_CHARS = 200_000;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -55,6 +59,52 @@ const labelMessage = (role: unknown, content: unknown) => {
   const text = contentToText(content);
   if (!text.trim()) return "";
   return `${cleanRole}: ${text}`;
+};
+
+const assertConversationLength = (value: string) => {
+  if (value.length > MAX_CONVERSATION_CHARS) {
+    throw new AppError(
+      400,
+      "Conversation is too long. Paste under 200,000 characters or upload a trimmed file."
+    );
+  }
+  return value;
+};
+
+const isPrivateOrReservedIp = (address: string) => {
+  if (address === "::1") return true;
+
+  const ipv4Match = /^(?:\d{1,3}\.){3}\d{1,3}$/.test(address)
+    ? address
+    : address.startsWith("::ffff:")
+      ? address.slice("::ffff:".length)
+      : null;
+
+  if (!ipv4Match) return false;
+
+  const parts = ipv4Match.split(".").map(Number);
+  const [first, second] = parts;
+
+  return (
+    first === 127 ||
+    first === 10 ||
+    (first === 172 && second >= 16 && second <= 31) ||
+    (first === 192 && second === 168) ||
+    (first === 169 && second === 254)
+  );
+};
+
+const rejectPrivateShareHost = async (hostname: string) => {
+  let records: LookupAddress[];
+  try {
+    records = await lookup(hostname, { all: true, verbatim: true });
+  } catch {
+    throw new AppError(400, "Share link host could not be resolved.");
+  }
+
+  if (records.some((record) => isPrivateOrReservedIp(record.address))) {
+    throw new AppError(400, "Share link resolved to a private or reserved IP address.");
+  }
 };
 
 const maybeMessageFromObject = (value: Record<string, unknown>) => {
@@ -317,6 +367,8 @@ export const fetchShareLinkConversation = async (shareUrl: string) => {
     throw new AppError(400, "Only public ChatGPT and Claude share links are supported.");
   }
 
+  await rejectPrivateShareHost(url.hostname);
+
   let response: Response;
   try {
     response = await fetch(url, {
@@ -350,7 +402,7 @@ export const fetchShareLinkConversation = async (shareUrl: string) => {
     );
   }
 
-  return truncate(combined);
+  return assertConversationLength(truncate(combined, MAX_CONVERSATION_CHARS));
 };
 
 export const normalizeInput = async ({
@@ -364,26 +416,26 @@ export const normalizeInput = async ({
 }) => {
   if (inputMethod === "share_link") {
     if (typeof content !== "string") throw new AppError(400, "Share link content must be a URL string.");
-    return fetchShareLinkConversation(content);
+    return assertConversationLength(await fetchShareLinkConversation(content));
   }
 
   if (inputMethod === "file_upload") {
     if (!file) throw new AppError(400, "Upload a .txt or .json file.");
-    return truncate(parseUploadedFile(file));
+    return assertConversationLength(truncate(parseUploadedFile(file), MAX_CONVERSATION_CHARS));
   }
 
   if (inputMethod === "raw_text") {
     if (typeof content !== "string" || content.trim().length < 20) {
       throw new AppError(400, "Paste at least 20 characters of conversation text.");
     }
-    return truncate(compactWhitespace(content));
+    return assertConversationLength(truncate(compactWhitespace(content), MAX_CONVERSATION_CHARS));
   }
 
   if (inputMethod === "manual_description") {
     if (!content || typeof content !== "object") {
       throw new AppError(400, "Manual description content is required.");
     }
-    return truncate(parseManualDescription(content as ManualDescription));
+    return assertConversationLength(truncate(parseManualDescription(content as ManualDescription), MAX_CONVERSATION_CHARS));
   }
 
   throw new AppError(400, "Unsupported input method.");
