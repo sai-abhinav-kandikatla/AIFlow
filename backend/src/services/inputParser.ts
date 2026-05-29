@@ -1,5 +1,6 @@
 import { lookup } from "node:dns/promises";
 import type { LookupAddress } from "node:dns";
+import { isIP } from "node:net";
 import * as cheerio from "cheerio";
 import { AppError } from "../utils/AppError.js";
 import { compactWhitespace, truncate } from "../utils/text.js";
@@ -13,15 +14,28 @@ export type ManualDescription = {
   continue_goal: string;
 };
 
-const ALLOWED_SHARE_HOSTS = new Set([
-  "chatgpt.com",
-  "www.chatgpt.com",
-  "chat.openai.com",
-  "claude.ai",
-  "www.claude.ai"
-]);
-
 export const MAX_CONVERSATION_CHARS = 200_000;
+const MAX_SHARE_REDIRECTS = 5;
+const MAX_SHARE_RESPONSE_BYTES = 2_000_000;
+const MIN_SHARE_CONVERSATION_CHARS = 40;
+const SHARE_FETCH_TIMEOUT_MS = 10_000;
+const MAX_EXTRACTED_TEXT_LEAVES = 80;
+const LIKELY_TEXT_KEYS = new Set([
+  "answer",
+  "body",
+  "content",
+  "input",
+  "markdown",
+  "message",
+  "output",
+  "prompt",
+  "query",
+  "question",
+  "response",
+  "result",
+  "text",
+  "title"
+]);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -72,12 +86,12 @@ const assertConversationLength = (value: string) => {
 };
 
 const isPrivateOrReservedIp = (address: string) => {
-  if (address === "::1") return true;
+  const normalized = address.replace(/^\[|\]$/g, "").toLowerCase();
 
-  const ipv4Match = /^(?:\d{1,3}\.){3}\d{1,3}$/.test(address)
-    ? address
-    : address.startsWith("::ffff:")
-      ? address.slice("::ffff:".length)
+  const ipv4Match = isIP(normalized) === 4
+    ? normalized
+    : normalized.startsWith("::ffff:")
+      ? normalized.slice("::ffff:".length)
       : null;
 
   if (!ipv4Match) return false;
@@ -86,11 +100,36 @@ const isPrivateOrReservedIp = (address: string) => {
   const [first, second] = parts;
 
   return (
+    first === 0 ||
     first === 127 ||
     first === 10 ||
+    (first === 100 && second >= 64 && second <= 127) ||
     (first === 172 && second >= 16 && second <= 31) ||
+    (first === 192 && second === 0) ||
     (first === 192 && second === 168) ||
-    (first === 169 && second === 254)
+    (first === 198 && (second === 18 || second === 19)) ||
+    (first === 169 && second === 254) ||
+    first >= 224
+  );
+};
+
+const isPrivateOrReservedAddress = (address: string) => {
+  const normalized = address.replace(/^\[|\]$/g, "").toLowerCase();
+
+  if (isPrivateOrReservedIp(normalized)) return true;
+  if (isIP(normalized) !== 6) return false;
+
+  return (
+    normalized === "::" ||
+    normalized === "::1" ||
+    normalized.startsWith("fc") ||
+    normalized.startsWith("fd") ||
+    normalized.startsWith("fe8") ||
+    normalized.startsWith("fe9") ||
+    normalized.startsWith("fea") ||
+    normalized.startsWith("feb") ||
+    normalized.startsWith("ff") ||
+    normalized.startsWith("2001:db8:")
   );
 };
 
@@ -102,9 +141,21 @@ const rejectPrivateShareHost = async (hostname: string) => {
     throw new AppError(400, "Share link host could not be resolved.");
   }
 
-  if (records.some((record) => isPrivateOrReservedIp(record.address))) {
+  if (records.some((record) => isPrivateOrReservedAddress(record.address))) {
     throw new AppError(400, "Share link resolved to a private or reserved IP address.");
   }
+};
+
+const validatePublicShareUrl = async (url: URL) => {
+  if (url.protocol !== "https:" && url.protocol !== "http:") {
+    throw new AppError(400, "Enter a public HTTP or HTTPS AI conversation URL.");
+  }
+
+  if (url.username || url.password) {
+    throw new AppError(400, "Share links with embedded credentials are not supported.");
+  }
+
+  await rejectPrivateShareHost(url.hostname);
 };
 
 const maybeMessageFromObject = (value: Record<string, unknown>) => {
@@ -175,6 +226,86 @@ const extractMessagesFromJson = (value: unknown, seen = new WeakSet<object>()): 
   return [];
 };
 
+const normalizeExtractedText = (value: string) => compactWhitespace(value.replace(/\u0000/g, " "));
+
+const looksLikeUsefulText = (value: string, key?: string) => {
+  const text = normalizeExtractedText(value);
+  if (text.length < 20) return false;
+
+  const lower = text.toLowerCase();
+  if (
+    lower.startsWith("http://") ||
+    lower.startsWith("https://") ||
+    lower.startsWith("data:") ||
+    lower.includes("data:image/") ||
+    lower.includes("__webpack") ||
+    lower.includes("webpack_require") ||
+    lower.includes("chunk-") ||
+    /\.(?:css|js|mjs|png|jpe?g|webp|gif|svg|woff2?)(?:\?|$)/i.test(text)
+  ) {
+    return false;
+  }
+
+  const normalizedKey = key?.toLowerCase();
+  return (
+    Boolean(normalizedKey && LIKELY_TEXT_KEYS.has(normalizedKey)) ||
+    text.length >= 60 ||
+    /\b(?:user|assistant|human|system)\s*:/i.test(text) ||
+    /[?!]/.test(text)
+  );
+};
+
+const collectLikelyTextLeaves = (
+  value: unknown,
+  key?: string,
+  seen = new WeakSet<object>(),
+  output: string[] = []
+): string[] => {
+  if (output.length >= MAX_EXTRACTED_TEXT_LEAVES) return output;
+
+  if (typeof value === "string") {
+    if (looksLikeUsefulText(value, key)) {
+      output.push(normalizeExtractedText(value));
+    }
+    return output;
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      collectLikelyTextLeaves(item, key, seen, output);
+      if (output.length >= MAX_EXTRACTED_TEXT_LEAVES) break;
+    }
+    return output;
+  }
+
+  if (!value || typeof value !== "object" || seen.has(value)) return output;
+  seen.add(value);
+
+  for (const [childKey, childValue] of Object.entries(value as Record<string, unknown>)) {
+    collectLikelyTextLeaves(childValue, childKey, seen, output);
+    if (output.length >= MAX_EXTRACTED_TEXT_LEAVES) break;
+  }
+
+  return output;
+};
+
+const uniqueTextChunks = (chunks: string[]) => {
+  const seen = new Set<string>();
+  return chunks.filter((chunk) => {
+    const normalized = normalizeExtractedText(chunk);
+    if (!normalized || seen.has(normalized)) return false;
+    seen.add(normalized);
+    return true;
+  });
+};
+
+const extractConversationTextFromJson = (value: unknown) => {
+  const messages = extractMessagesFromJson(value);
+  if (messages.length > 0) return compactWhitespace(messages.join("\n\n"));
+
+  return compactWhitespace(uniqueTextChunks(collectLikelyTextLeaves(value)).join("\n\n"));
+};
+
 export const parseUploadedFile = (file: Express.Multer.File) => {
   const originalName = file.originalname.toLowerCase();
   const text = file.buffer.toString("utf8");
@@ -182,10 +313,8 @@ export const parseUploadedFile = (file: Express.Multer.File) => {
   if (originalName.endsWith(".json")) {
     try {
       const parsed = JSON.parse(text) as unknown;
-      const messages = extractMessagesFromJson(parsed);
-      if (messages.length > 0) {
-        return compactWhitespace(messages.join("\n\n"));
-      }
+      const extracted = extractConversationTextFromJson(parsed);
+      if (extracted) return extracted;
       return compactWhitespace(JSON.stringify(parsed, null, 2));
     } catch {
       throw new AppError(400, "The uploaded JSON file could not be parsed.");
@@ -223,22 +352,107 @@ const collectVisibleText = (html: string) => {
   return compactWhitespace(primaryText);
 };
 
+const collectMetaText = (html: string) => {
+  const $ = cheerio.load(html);
+  const chunks = [
+    $("title").first().text(),
+    $("meta[name='description']").attr("content"),
+    $("meta[property='og:title']").attr("content"),
+    $("meta[property='og:description']").attr("content"),
+    $("meta[name='twitter:title']").attr("content"),
+    $("meta[name='twitter:description']").attr("content")
+  ].filter((value): value is string => typeof value === "string" && looksLikeUsefulText(value));
+
+  return compactWhitespace(uniqueTextChunks(chunks).join("\n\n"));
+};
+
 const collectEmbeddedJsonText = (html: string) => {
   const $ = cheerio.load(html);
   const chunks: string[] = [];
 
-  $("script[type='application/json'], script#__NEXT_DATA__").each((_index, element) => {
+  $("script[type*='json'], script#__NEXT_DATA__").each((_index, element) => {
     const raw = $(element).text();
     if (!raw) return;
     try {
-      const messages = extractMessagesFromJson(JSON.parse(raw));
-      if (messages.length > 0) chunks.push(messages.join("\n\n"));
+      const extracted = extractConversationTextFromJson(JSON.parse(raw));
+      if (extracted) chunks.push(extracted);
     } catch {
       // Ignore non-JSON script content.
     }
   });
 
   return compactWhitespace(chunks.join("\n\n"));
+};
+
+const readBalancedJsonCandidate = (source: string, startIndex: number) => {
+  const opener = source[startIndex];
+  if (opener !== "{" && opener !== "[") return null;
+
+  const stack: string[] = [];
+  let quote: string | null = null;
+  let escaped = false;
+
+  for (let index = startIndex; index < source.length; index += 1) {
+    const char = source[index];
+
+    if (quote) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === "\\") {
+        escaped = true;
+      } else if (char === quote) {
+        quote = null;
+      }
+      continue;
+    }
+
+    if (char === "\"" || char === "'") {
+      quote = char;
+      continue;
+    }
+
+    if (char === "{" || char === "[") {
+      stack.push(char === "{" ? "}" : "]");
+      continue;
+    }
+
+    if ((char === "}" || char === "]") && stack.at(-1) === char) {
+      stack.pop();
+      if (stack.length === 0) return source.slice(startIndex, index + 1);
+    }
+  }
+
+  return null;
+};
+
+const parseJsonCandidate = (candidate: string) => {
+  try {
+    return JSON.parse(candidate) as unknown;
+  } catch {
+    return null;
+  }
+};
+
+const collectJsonCandidatesAfter = (source: string, marker: string) => {
+  const chunks: string[] = [];
+  let searchIndex = 0;
+
+  while (searchIndex < source.length) {
+    const markerIndex = source.indexOf(marker, searchIndex);
+    if (markerIndex === -1) break;
+
+    const objectStart = source.slice(markerIndex, markerIndex + 240).search(/[{\[]/);
+    if (objectStart !== -1) {
+      const candidate = readBalancedJsonCandidate(source, markerIndex + objectStart);
+      const parsed = candidate ? parseJsonCandidate(candidate) : null;
+      const extracted = parsed ? extractConversationTextFromJson(parsed) : "";
+      if (extracted) chunks.push(extracted);
+    }
+
+    searchIndex = markerIndex + marker.length;
+  }
+
+  return chunks;
 };
 
 const decodeJavaScriptStringLiteral = (value: string) => {
@@ -345,37 +559,142 @@ const collectReactFlightText = (html: string) => {
   return compactWhitespace(chunks.join("\n\n"));
 };
 
+const collectDecodedScriptStrings = (source: string) => {
+  const chunks: string[] = [];
+  const stringPattern = /"((?:\\.|[^"\\]){20,})"/g;
+
+  for (const match of source.matchAll(stringPattern)) {
+    const decoded = decodeEscapedJsonString(match[1] ?? "");
+    const trimmed = decoded.trim();
+    const parsed = (trimmed.startsWith("{") || trimmed.startsWith("[")) ? parseJsonCandidate(trimmed) : null;
+    const extracted = parsed ? extractConversationTextFromJson(parsed) : "";
+
+    if (extracted) {
+      chunks.push(extracted);
+    } else if (looksLikeUsefulText(decoded)) {
+      chunks.push(decoded);
+    }
+  }
+
+  return chunks;
+};
+
+const collectInlineScriptText = (html: string) => {
+  const $ = cheerio.load(html);
+  const chunks: string[] = [];
+  const markers = [
+    "__NEXT_DATA__",
+    "__NUXT__",
+    "__INITIAL_STATE__",
+    "__APOLLO_STATE__",
+    "__REMIX_CONTEXT",
+    "__next_f.push",
+    "self.__next_f.push",
+    "conversation",
+    "messages",
+    "prompt",
+    "response"
+  ];
+  const usefulScriptPattern = /conversation|messages|chat|prompt|response|answer|__next_f|__NUXT|__INITIAL_STATE|__APOLLO_STATE|__REMIX_CONTEXT|__NEXT_DATA__/i;
+
+  $("script").each((_index, element) => {
+    const raw = $(element).text();
+    if (!raw.trim()) return;
+
+    for (const marker of markers) {
+      chunks.push(...collectJsonCandidatesAfter(raw, marker));
+    }
+
+    if (usefulScriptPattern.test(raw)) {
+      chunks.push(...collectDecodedScriptStrings(raw));
+    }
+  });
+
+  return compactWhitespace(uniqueTextChunks(chunks).join("\n\n"));
+};
+
+const collectJsonDocumentText = (text: string) => {
+  const trimmed = text.trim();
+  if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) return "";
+
+  try {
+    const parsed = JSON.parse(trimmed) as unknown;
+    const extracted = extractConversationTextFromJson(parsed);
+    if (extracted) return extracted;
+    return compactWhitespace(JSON.stringify(parsed, null, 2));
+  } catch {
+    return "";
+  }
+};
+
 const looksLikeSharePlaceholder = (text: string) => {
   const lower = text.toLowerCase();
   return (
     lower.includes("by messaging chatgpt") ||
     lower.includes("agree to our terms") ||
+    lower.includes("continue with google") ||
+    lower.includes("enable javascript") ||
+    lower.includes("log in to continue") ||
+    lower.includes("please sign in") ||
     lower.includes("privacy policy") ||
+    lower.includes("sign in to continue") ||
+    lower.includes("unsupported browser") ||
     lower === "voice"
   );
 };
 
-export const fetchShareLinkConversation = async (shareUrl: string) => {
-  let url: URL;
-  try {
-    url = new URL(shareUrl);
-  } catch {
-    throw new AppError(400, "Enter a valid ChatGPT or Claude share URL.");
-  }
+const providerLabelFromUrl = (url: URL) => {
+  const host = url.hostname.replace(/^www\./, "").toLowerCase();
 
-  if (!ALLOWED_SHARE_HOSTS.has(url.hostname)) {
-    throw new AppError(400, "Only public ChatGPT and Claude share links are supported.");
-  }
+  if (host.includes("chatgpt") || host.includes("openai")) return "ChatGPT";
+  if (host.includes("claude") || host.includes("anthropic")) return "Claude";
+  if (host.includes("gemini") || host === "g.co" || host.includes("google")) return "Gemini";
+  if (host.includes("deepseek")) return "DeepSeek";
+  if (host.includes("grok") || host === "x.com" || host.endsWith(".x.com")) return "Grok";
 
-  await rejectPrivateShareHost(url.hostname);
+  return host;
+};
+
+const buildShareLinkFallback = ({
+  sourceUrl,
+  finalUrl,
+  meta,
+  visible
+}: {
+  sourceUrl: URL;
+  finalUrl?: string;
+  meta: string;
+  visible: string;
+}) => {
+  const readableSignals = compactWhitespace([meta, visible].filter(Boolean).join("\n\n"));
+
+  return compactWhitespace(`
+Public AI Conversation Share Link
+
+Provider: ${providerLabelFromUrl(sourceUrl)}
+Source URL: ${sourceUrl.toString()}
+${finalUrl && finalUrl !== sourceUrl.toString() ? `Resolved URL: ${finalUrl}` : ""}
+
+Readable page signals:
+${readableSignals || "The provider returned a public page, but did not expose the full transcript in server-readable HTML, JSON, or metadata."}
+
+Extraction note:
+The conversation page loaded successfully, but the complete transcript appears to be hidden behind client-side rendering, login gating, bot protection, or a provider-specific private payload. Treat this Flow as a link-based handoff and preserve that limitation clearly. Continue by helping the user recover or continue the work from the available link context; if exact message history is required, ask for a pasted transcript or .txt/.json export.
+`);
+};
+
+const fetchPublicShareUrl = async (url: URL, redirectCount = 0): Promise<Response> => {
+  await validatePublicShareUrl(url);
 
   let response: Response;
   try {
     response = await fetch(url, {
+      redirect: "manual",
       headers: {
         "user-agent": "AIFlow/1.0 (+https://aiflow.app)",
-        accept: "text/html,application/xhtml+xml"
-      }
+        accept: "text/html,application/xhtml+xml,application/json,text/plain"
+      },
+      signal: AbortSignal.timeout(SHARE_FETCH_TIMEOUT_MS)
     });
   } catch {
     throw new AppError(
@@ -384,21 +703,96 @@ export const fetchShareLinkConversation = async (shareUrl: string) => {
     );
   }
 
+  if (response.status >= 300 && response.status < 400) {
+    const location = response.headers.get("location");
+    if (!location) {
+      throw new AppError(response.status, "The share link redirected without a destination URL.");
+    }
+
+    if (redirectCount >= MAX_SHARE_REDIRECTS) {
+      throw new AppError(400, "The share link redirected too many times.");
+    }
+
+    return fetchPublicShareUrl(new URL(location, url), redirectCount + 1);
+  }
+
+  return response;
+};
+
+const assertReadableShareResponse = (response: Response) => {
+  const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+  if (contentType && !/(text|html|json|xml|javascript)/.test(contentType)) {
+    throw new AppError(
+      415,
+      "The share link returned a file type AIFlow cannot read. Paste the conversation as raw text or upload a .txt/.json export."
+    );
+  }
+
+  const contentLength = Number(response.headers.get("content-length"));
+  if (Number.isFinite(contentLength) && contentLength > MAX_SHARE_RESPONSE_BYTES) {
+    throw new AppError(413, "The share link response is too large. Paste a trimmed conversation or upload a .txt/.json export.");
+  }
+};
+
+const readLimitedResponseText = async (response: Response) => {
+  assertReadableShareResponse(response);
+
+  if (!response.body) {
+    return response.text();
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let bytesRead = 0;
+  let text = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    bytesRead += value.byteLength;
+    if (bytesRead > MAX_SHARE_RESPONSE_BYTES) {
+      await reader.cancel();
+      throw new AppError(413, "The share link response is too large. Paste a trimmed conversation or upload a .txt/.json export.");
+    }
+
+    text += decoder.decode(value, { stream: true });
+  }
+
+  return text + decoder.decode();
+};
+
+export const fetchShareLinkConversation = async (shareUrl: string) => {
+  let url: URL;
+  try {
+    url = new URL(shareUrl);
+  } catch {
+    throw new AppError(400, "Enter a valid public AI conversation URL.");
+  }
+
+  const response = await fetchPublicShareUrl(url);
   if (!response.ok) {
     throw new AppError(response.status, "The share link could not be fetched. Make sure it is public.");
   }
 
-  const html = await response.text();
-  const embedded = collectEmbeddedJsonText(html);
-  const reactFlight = collectReactFlightText(html);
-  const visible = collectVisibleText(html);
-  const structuredConversation = compactWhitespace([embedded, reactFlight].filter(Boolean).join("\n\n"));
-  const combined = structuredConversation || visible;
+  const body = await readLimitedResponseText(response);
+  const jsonDocument = collectJsonDocumentText(body);
+  const embedded = collectEmbeddedJsonText(body);
+  const reactFlight = collectReactFlightText(body);
+  const inlineScript = collectInlineScriptText(body);
+  const meta = collectMetaText(body);
+  const visible = collectVisibleText(body);
+  const structuredConversation = compactWhitespace([jsonDocument, embedded, reactFlight, inlineScript].filter(Boolean).join("\n\n"));
+  const combined = structuredConversation || compactWhitespace([meta, visible].filter(Boolean).join("\n\n"));
 
-  if (combined.length < 160 || (!structuredConversation && looksLikeSharePlaceholder(combined))) {
-    throw new AppError(
-      422,
-      "The share link loaded, but AIFlow could not read the conversation. Paste the conversation as raw text or upload a .txt/.json export instead."
+  if (combined.length < MIN_SHARE_CONVERSATION_CHARS || (!structuredConversation && !meta && looksLikeSharePlaceholder(combined))) {
+    return assertConversationLength(
+      buildShareLinkFallback({
+        sourceUrl: url,
+        finalUrl: response.url,
+        meta,
+        visible
+      })
     );
   }
 

@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils'
 const methodCopy: Record<InputMethod, { title: string; description: string }> = {
   share_link: {
     title: 'Share link',
-    description: 'Submit a public ChatGPT or Claude share link to preserve the complete conversation state.',
+    description: 'Submit a public AI conversation share link to preserve the complete conversation state.',
   },
   file_upload: {
     title: 'Export file',
@@ -134,7 +134,7 @@ export const NewThreadPage = () => {
                   <Label htmlFor="share-link">Source URL</Label>
                   <Input
                     id="share-link"
-                    placeholder="https://chatgpt.com/share/..."
+                    placeholder="https://your-ai-model.com/share/..."
                     value={shareLink}
                     onChange={(event) => setShareLink(event.target.value)}
                     required={method === 'share_link'}
