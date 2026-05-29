@@ -1,5 +1,11 @@
-export const truncate = (value: string, max = 48000) =>
-  value.length > max ? `${value.slice(0, max)}\n\n[Truncated for analysis]` : value;
+export const truncate = (value: string, max = 48000) => {
+  if (value.length <= max) return value;
+
+  const suffix = "\n\n[Truncated for analysis]";
+  if (max <= suffix.length) return value.slice(0, max);
+
+  return `${value.slice(0, max - suffix.length)}${suffix}`;
+};
 
 export const compactWhitespace = (value: string) =>
   value
