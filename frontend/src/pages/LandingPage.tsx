@@ -198,7 +198,7 @@ export const LandingPage = () => (
 
     <section className="relative px-4 pb-20 pt-32 md:px-8 md:pt-40">
       <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.07)_1px,transparent_1px)] bg-[size:56px_56px] opacity-20" />
-      <div className="absolute inset-x-0 top-0 h-[520px] bg-[linear-gradient(135deg,rgba(49,87,255,0.28),rgba(124,58,237,0.16),transparent_62%)]" />
+      <div className="absolute inset-x-0 top-0 h-[820px] bg-[linear-gradient(135deg,rgba(49,87,255,0.28),rgba(124,58,237,0.16)_48%,rgba(9,11,16,0)_92%)]" />
       <div className="relative mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
         <div>
           <Badge className="border-white/15 bg-white/10 text-white">AI conversation transfer</Badge>
