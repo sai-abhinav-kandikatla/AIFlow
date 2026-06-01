@@ -10,3 +10,5 @@ frontend/dist
 backend/dist
 backend/src/generated/
 scratch-prisma
+
+.vercel
