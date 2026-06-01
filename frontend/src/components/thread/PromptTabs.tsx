@@ -115,7 +115,7 @@ export const PromptTabs = ({
                   {copied === prompt.model_name ? 'Copied!' : 'Copy Handoff'}
                 </Button>
               </div>
-              <pre className="max-h-[440px] overflow-auto whitespace-pre-wrap rounded-2xl border bg-muted/40 p-4 font-mono text-sm leading-6 text-foreground shadow-inner">
+              <pre className="max-h-[440px] overflow-auto whitespace-pre-wrap break-words rounded-2xl border bg-muted/40 p-4 font-mono text-sm leading-6 text-foreground shadow-inner [overflow-wrap:anywhere]">
                 {prompt.prompt_text}
               </pre>
             </TabsContent>

@@ -38,6 +38,15 @@ const LIKELY_TEXT_KEYS = new Set([
   "text",
   "title"
 ]);
+const APP_SHELL_NOISE_MARKERS = [
+  "feature_gates",
+  "rule_id",
+  "secondary_exposures",
+  "id_type",
+  "statsig",
+  "is_device_based",
+  "promotion_campaign_id"
+];
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -308,6 +317,41 @@ const extractConversationTextFromJson = (value: unknown) => {
   return compactWhitespace(uniqueTextChunks(collectLikelyTextLeaves(value)).join("\n\n"));
 };
 
+const extractMessagesTextFromJson = (value: unknown) => {
+  const messages = extractMessagesFromJson(value);
+  return messages.length > 0 ? compactWhitespace(messages.join("\n\n")) : "";
+};
+
+const hasRoleLabeledConversation = (value: string) => {
+  const matches = normalizeExtractedText(value).match(/\b(?:assistant|human|system|user)\s*:/gi);
+  return Boolean(matches && matches.length >= 2);
+};
+
+const looksLikeStandaloneConversationText = (value: string) => {
+  const text = normalizeExtractedText(value);
+  if (text.length < 40) return false;
+  if (hasRoleLabeledConversation(text)) return true;
+  if (looksLikeAppShellNoise(text)) return false;
+
+  const lower = text.toLowerCase();
+  return (
+    text.length >= 140 &&
+    /\b(?:assistant|conversation|message|prompt|response|user)\b/i.test(text) &&
+    /[.!?]/.test(text) &&
+    !lower.includes("log in to view this conversation") &&
+    !lower.includes("conversation has been deleted")
+  );
+};
+
+const looksLikeAppShellNoise = (value: string) => {
+  const lower = normalizeExtractedText(value).toLowerCase();
+  if (!lower) return false;
+  if (/^\{?\s*"?feature_gates"?\s*:/.test(lower)) return true;
+
+  const markerCount = APP_SHELL_NOISE_MARKERS.filter((marker) => lower.includes(marker)).length;
+  return markerCount >= 3 && !hasRoleLabeledConversation(lower);
+};
+
 export const parseUploadedFile = (file: Express.Multer.File) => {
   const originalName = file.originalname.toLowerCase();
   const text = file.buffer.toString("utf8");
@@ -376,7 +420,7 @@ const collectEmbeddedJsonText = (html: string) => {
     const raw = $(element).text();
     if (!raw) return;
     try {
-      const extracted = extractConversationTextFromJson(JSON.parse(raw));
+      const extracted = extractMessagesTextFromJson(JSON.parse(raw));
       if (extracted) chunks.push(extracted);
     } catch {
       // Ignore non-JSON script content.
@@ -447,7 +491,7 @@ const collectJsonCandidatesAfter = (source: string, marker: string) => {
     if (objectStart !== -1) {
       const candidate = readBalancedJsonCandidate(source, markerIndex + objectStart);
       const parsed = candidate ? parseJsonCandidate(candidate) : null;
-      const extracted = parsed ? extractConversationTextFromJson(parsed) : "";
+      const extracted = parsed ? extractMessagesTextFromJson(parsed) : "";
       if (extracted) chunks.push(extracted);
     }
 
@@ -553,8 +597,9 @@ const collectReactFlightText = (html: string) => {
 
   for (const match of html.matchAll(partsPattern)) {
     const text = decodeEscapedJsonString(match[1] ?? "");
-    if (text.trim().length > 40) {
-      chunks.push(text);
+    const clean = normalizeExtractedText(text);
+    if (clean.length > 40 && !looksLikeAppShellNoise(clean) && !looksLikeSharePlaceholder(clean)) {
+      chunks.push(clean);
     }
   }
 
@@ -573,7 +618,7 @@ const collectDecodedScriptStrings = (source: string) => {
 
     if (extracted) {
       chunks.push(extracted);
-    } else if (looksLikeUsefulText(decoded)) {
+    } else if (!parsed && looksLikeStandaloneConversationText(decoded)) {
       chunks.push(decoded);
     }
   }
@@ -633,9 +678,11 @@ const looksLikeSharePlaceholder = (text: string) => {
   const lower = text.toLowerCase();
   return (
     lower.includes("by messaging chatgpt") ||
+    lower.includes("conversation has been deleted") ||
     lower.includes("agree to our terms") ||
     lower.includes("continue with google") ||
     lower.includes("enable javascript") ||
+    lower.includes("log in to view this conversation") ||
     lower.includes("log in to continue") ||
     lower.includes("please sign in") ||
     lower.includes("privacy policy") ||
@@ -853,8 +900,17 @@ export const fetchShareLinkConversation = async (shareUrl: string) => {
   const visible = collectVisibleText(body);
   const structuredConversation = compactWhitespace([jsonDocument, embedded, reactFlight, inlineScript].filter(Boolean).join("\n\n"));
   const combined = structuredConversation || compactWhitespace([meta, visible].filter(Boolean).join("\n\n"));
+  const hasUnusableStructuredData =
+    Boolean(structuredConversation) &&
+    (looksLikeAppShellNoise(structuredConversation) || looksLikeSharePlaceholder(structuredConversation));
+  const hasReadableConversation = Boolean(structuredConversation) || looksLikeStandaloneConversationText(combined);
 
-  if (combined.length < MIN_SHARE_CONVERSATION_CHARS || (!structuredConversation && !meta && looksLikeSharePlaceholder(combined))) {
+  if (
+    combined.length < MIN_SHARE_CONVERSATION_CHARS ||
+    hasUnusableStructuredData ||
+    !hasReadableConversation ||
+    (!structuredConversation && looksLikeSharePlaceholder(combined))
+  ) {
     return assertConversationLength(
       buildShareLinkFallback({
         sourceUrl: url,

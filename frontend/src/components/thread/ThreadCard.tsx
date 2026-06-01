@@ -10,7 +10,7 @@ const Section = ({
   children: React.ReactNode
   className?: string
 }) => (
-  <div className={`border-l-2 border-primary/25 pl-4 ${className ?? ''}`}>
+  <div className={`min-w-0 break-words border-l-2 border-primary/25 pl-4 [overflow-wrap:anywhere] ${className ?? ''}`}>
     <p className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
     <div className="text-sm leading-relaxed text-foreground">{children}</div>
   </div>
@@ -28,7 +28,7 @@ export const ThreadCard = ({ thread }: { thread: Thread }) => (
           ))}
         </div>
       ) : null}
-      <CardTitle className="text-2xl leading-tight tracking-tight">{thread.title}</CardTitle>
+      <CardTitle className="break-words text-2xl leading-tight tracking-tight [overflow-wrap:anywhere]">{thread.title}</CardTitle>
     </CardHeader>
     <CardContent className="grid gap-6 pt-0 lg:grid-cols-2">
       <Section label="Current Objective" className="animate-fade-slide-up stagger-1">
@@ -43,7 +43,7 @@ export const ThreadCard = ({ thread }: { thread: Thread }) => (
             thread.key_decisions.map((decision) => (
               <li key={decision} className="flex gap-2">
                 <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                <span>{decision}</span>
+                <span className="min-w-0 break-words [overflow-wrap:anywhere]">{decision}</span>
               </li>
             ))
           ) : (
@@ -55,7 +55,7 @@ export const ThreadCard = ({ thread }: { thread: Thread }) => (
         {thread.next_step}
       </Section>
       <Section label="Flow Context" className="animate-fade-slide-up stagger-5 lg:col-span-2">
-        <p className="text-muted-foreground">{thread.context}</p>
+        <p className="break-words text-muted-foreground [overflow-wrap:anywhere]">{thread.context}</p>
       </Section>
     </CardContent>
   </Card>
