@@ -202,7 +202,7 @@ export const LandingPage = () => (
       <div className="relative mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
         <div>
           <Badge className="border-white/15 bg-white/10 text-white">AI conversation transfer</Badge>
-          <h1 className="mt-6 max-w-4xl text-5xl font-semibold leading-[1.02] md:text-7xl">
+          <h1 className="mt-6 max-w-4xl text-4xl font-semibold leading-[1.08] md:text-6xl">
             Move AI conversations between models without losing context
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-300">
