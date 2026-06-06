@@ -58,7 +58,7 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify(body),
     }),
-  login: (body: { email: string; password: string }) =>
+  login: (body: { email: string; password: string; captcha_token?: string }) =>
     apiRequest<{ user: Profile; session: Session; csrf_token?: string }>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify(body),

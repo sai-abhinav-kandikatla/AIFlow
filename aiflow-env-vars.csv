@@ -23,3 +23,4 @@ frontend,VITE_API_URL,http://localhost:4000,Frontend API base URL
 frontend,VITE_SUPABASE_URL,https://wrpnzeexxqdvlecalvoq.supabase.co,Supabase project URL
 frontend,VITE_SUPABASE_ANON_KEY,sb_publishable_-Qy9tXWyjLWppWqKFDwHMw_eEbmdwCI,Supabase public publishable key
 frontend,VITE_AUTH_REDIRECT_URL,https://ai-flow-two.vercel.app/auth/callback,Production OAuth callback
+frontend,VITE_CAPTCHA_SITE_KEY,,Optional CAPTCHA site key for suspicious login challenges

@@ -9,9 +9,32 @@ import { Label } from '@/components/ui/label'
 import { useAuth } from '@/contexts/AuthContext'
 import { clearSupabaseAuthStorage } from '@/lib/supabase'
 
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (
+        element: HTMLElement,
+        options: {
+          sitekey: string
+          callback: (token: string) => void
+          'expired-callback': () => void
+          'error-callback': () => void
+          theme?: 'light' | 'dark' | 'auto'
+        },
+      ) => string
+      reset: (widgetId?: string) => void
+    }
+  }
+}
+
+const captchaSiteKey = import.meta.env.VITE_CAPTCHA_SITE_KEY as string | undefined
+const turnstileScriptId = 'aiflow-turnstile-script'
+
 export const LoginPage = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [captchaRequired, setCaptchaRequired] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState('')
   const [loading, setLoading] = useState(false)
   const { login, loginWithGoogle, session } = useAuth()
   const navigate = useNavigate()
@@ -20,10 +43,42 @@ export const LoginPage = () => {
   const redirectTo = routeState?.from ?? '/app'
   const authError = routeState?.authError
   const shownAuthError = useRef<string | null>(null)
+  const captchaRef = useRef<HTMLDivElement | null>(null)
+  const captchaWidgetId = useRef<string | null>(null)
 
   useEffect(() => {
     if (session) navigate(redirectTo, { replace: true })
   }, [navigate, redirectTo, session])
+
+  useEffect(() => {
+    if (!captchaRequired || !captchaSiteKey || !captchaRef.current || captchaWidgetId.current) return
+
+    const renderCaptcha = () => {
+      if (!window.turnstile || !captchaRef.current || captchaWidgetId.current) return
+      captchaWidgetId.current = window.turnstile.render(captchaRef.current, {
+        sitekey: captchaSiteKey,
+        theme: 'auto',
+        callback: setCaptchaToken,
+        'expired-callback': () => setCaptchaToken(''),
+        'error-callback': () => setCaptchaToken(''),
+      })
+    }
+
+    const existing = document.getElementById(turnstileScriptId)
+    if (existing) {
+      renderCaptcha()
+      existing.addEventListener('load', renderCaptcha, { once: true })
+      return
+    }
+
+    const script = document.createElement('script')
+    script.id = turnstileScriptId
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js'
+    script.async = true
+    script.defer = true
+    script.onload = renderCaptcha
+    document.body.appendChild(script)
+  }, [captchaRequired])
 
   const restartGoogleConnection = useCallback(async () => {
     await clearSupabaseAuthStorage()
@@ -49,11 +104,17 @@ export const LoginPage = () => {
     event.preventDefault()
     setLoading(true)
     try {
-      await login({ email, password })
+      await login({ email, password, captcha_token: captchaToken || undefined })
       toast.success('Signed in. Opening your workspace.')
       navigate(redirectTo)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Login failed')
+      const message = error instanceof Error ? error.message : 'Login failed'
+      if (message.toLowerCase().includes('additional verification')) {
+        setCaptchaRequired(true)
+        setCaptchaToken('')
+        captchaWidgetId.current = null
+      }
+      toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -75,7 +136,16 @@ export const LoginPage = () => {
           </div>
           <Input id="password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
         </div>
-        <Button className="w-full" disabled={loading}>
+        {captchaRequired ? (
+          <div className="rounded-md border bg-muted/40 p-3">
+            {captchaSiteKey ? (
+              <div ref={captchaRef} className="min-h-[65px]" />
+            ) : (
+              <p className="text-sm text-muted-foreground">Additional verification is required. Try again later.</p>
+            )}
+          </div>
+        ) : null}
+        <Button className="w-full" disabled={loading || (captchaRequired && Boolean(captchaSiteKey) && !captchaToken)}>
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           Sign in
         </Button>

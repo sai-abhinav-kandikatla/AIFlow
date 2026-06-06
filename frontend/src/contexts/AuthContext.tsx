@@ -21,7 +21,7 @@ type AuthContextValue = {
   loading: boolean
   refreshProfile: () => Promise<void>
   signup: (payload: { name?: string; email: string; password: string }) => Promise<{ message: string; needsVerification: boolean }>
-  login: (payload: { email: string; password: string }) => Promise<void>
+  login: (payload: { email: string; password: string; captcha_token?: string }) => Promise<void>
   loginWithGoogle: () => Promise<void>
   resendVerification: (email: string) => Promise<void>
   forgotPassword: (email: string) => Promise<void>
