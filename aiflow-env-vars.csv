@@ -5,6 +5,9 @@ backend,AIFLOW_DATABASE_URL,postgresql://postgres.wrpnzeexxqdvlecalvoq:YOUR-PASS
 backend,AIFLOW_DIRECT_URL,postgresql://postgres.wrpnzeexxqdvlecalvoq:YOUR-PASSWORD@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres?sslmode=require,Preferred migration DB URL; overrides Railway DIRECT_URL
 backend,GEMINI_API_KEY,already set in backend/.env,Do not expose publicly
 backend,GEMINI_MODEL,gemini-2.5-flash,Default Gemini model
+backend,SECURITY_LOG_SALT,generate-random-value,Used to hash emails/IPs in security audit logs
+backend,CAPTCHA_SECRET,,Optional CAPTCHA secret for suspicious login verification
+backend,CAPTCHA_VERIFY_URL,https://challenges.cloudflare.com/turnstile/v0/siteverify,CAPTCHA provider verification endpoint
 backend,SUPABASE_URL,https://wrpnzeexxqdvlecalvoq.supabase.co,Supabase project URL
 backend,SUPABASE_ANON_KEY,sb_publishable_-Qy9tXWyjLWppWqKFDwHMw_eEbmdwCI,Supabase public publishable key
 backend,SUPABASE_PUBLISHABLE_KEY,sb_publishable_-Qy9tXWyjLWppWqKFDwHMw_eEbmdwCI,Supabase publishable key alias

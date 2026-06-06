@@ -6,6 +6,7 @@ export type Profile = {
   name: string | null
   avatar_url: string | null
   plan: Plan
+  role: 'user' | 'admin'
   subscription_status: string | null
   subscription_current_period_end: string | null
 }

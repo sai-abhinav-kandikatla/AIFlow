@@ -10,7 +10,7 @@ import {
   type RazorpaySubscription,
   verifyRazorpaySignature
 } from "../lib/razorpay.js";
-import { requireAuth } from "../middleware/auth.js";
+import { requireAuth, requireMfaForSensitiveAction } from "../middleware/auth.js";
 import { AppError } from "../utils/AppError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
@@ -124,6 +124,7 @@ router.use(requireAuth);
 
 router.post(
   "/checkout",
+  requireMfaForSensitiveAction,
   asyncHandler(async (req, res) => {
     requireBilling();
     const body = checkoutSchema.parse(req.body);
@@ -203,6 +204,7 @@ router.post(
 
 router.post(
   "/cancel",
+  requireMfaForSensitiveAction,
   asyncHandler(async (req, res) => {
     requireBilling();
     const subscriptionId = req.auth!.user.paymentSubscriptionId;

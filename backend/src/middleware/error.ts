@@ -1,7 +1,6 @@
 import { ZodError } from "zod";
 import type { ErrorRequestHandler } from "express";
 import { AppError } from "../utils/AppError.js";
-import { isProduction } from "../config/env.js";
 
 const isPrismaError = (err: unknown) =>
   Boolean(
@@ -13,20 +12,9 @@ const isPrismaError = (err: unknown) =>
           (err as { errorCode: string }).errorCode.startsWith("P")))
   );
 
-const sanitizeErrorMessage = (value: unknown) => {
-  const message = value instanceof Error ? value.message : String(value ?? "Unknown server error");
-
-  return message
-    .replace(/postgresql:\/\/[^\s"']+/gi, "postgresql://[redacted]")
-    .replace(/Bearer\s+[A-Za-z0-9._-]+/g, "Bearer [redacted]")
-    .replace(/AIza[0-9A-Za-z_-]+/g, "[redacted-api-key]")
-    .slice(0, 260);
-};
-
-const errorPayload = (statusCode: number, message: string, details?: unknown) => ({
+const errorPayload = (_statusCode: number, message: string) => ({
   error: {
-    message,
-    ...(!isProduction || statusCode < 500 ? { details } : {})
+    message
   }
 });
 
@@ -46,34 +34,21 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   if (err instanceof ZodError) {
     return res.status(400).json({
       error: {
-        message: "Validation failed.",
-        details: err.flatten()
+        message: "Invalid request."
       }
     });
   }
 
   if (err instanceof AppError) {
-    return res.status(err.statusCode).json(errorPayload(err.statusCode, err.message, err.details));
+    return res.status(err.statusCode).json(errorPayload(err.statusCode, err.message));
   }
 
   if (isPrismaError(err)) {
-    return res
-      .status(503)
-      .json(
-        errorPayload(
-          503,
-          "Database request failed. Check the Supabase DATABASE_URL/DIRECT_URL values and make sure migrations were applied.",
-          {
-            cause: sanitizeErrorMessage(err)
-          }
-        )
-      );
+    return res.status(503).json(errorPayload(503, "Service temporarily unavailable."));
   }
 
   const statusCode = typeof err?.statusCode === "number" ? err.statusCode : 500;
   return res.status(statusCode).json(
-    errorPayload(statusCode, statusCode === 500 ? "Server error while processing the request." : err.message, {
-      cause: statusCode === 500 ? sanitizeErrorMessage(err) : err?.stack
-    })
+    errorPayload(statusCode, statusCode === 500 ? "Server error while processing the request." : "Request failed.")
   );
 };

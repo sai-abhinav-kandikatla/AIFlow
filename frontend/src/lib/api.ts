@@ -33,6 +33,7 @@ export const apiRequest = async <T>(path: string, { token, headers, body, ...opt
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
     body,
+    credentials: 'include',
     headers: {
       ...(isForm ? {} : { 'content-type': 'application/json' }),
       ...(token ? { authorization: `Bearer ${token}` } : {}),
@@ -53,12 +54,34 @@ export const apiRequest = async <T>(path: string, { token, headers, body, ...opt
 
 export const authApi = {
   signup: (body: { email: string; password: string; name?: string }) =>
-    apiRequest<{ message: string; session?: Session; user?: unknown }>('/api/auth/signup', {
+    apiRequest<{ message: string }>('/api/auth/signup', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
   login: (body: { email: string; password: string }) =>
-    apiRequest<{ user: Profile; session: Session }>('/api/auth/login', {
+    apiRequest<{ user: Profile; session: Session; csrf_token?: string }>('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  resendVerification: (body: { email: string }) =>
+    apiRequest<{ message: string }>('/api/auth/verification/resend', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  forgotPassword: (body: { email: string }) =>
+    apiRequest<{ message: string }>('/api/auth/password/forgot', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  resetPassword: (token: string, body: { password: string }) =>
+    apiRequest<{ message: string }>('/api/auth/password/reset', {
+      token,
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  changePassword: (token: string, body: { current_password: string; new_password: string }) =>
+    apiRequest<{ message: string }>('/api/auth/password/change', {
+      token,
       method: 'POST',
       body: JSON.stringify(body),
     }),

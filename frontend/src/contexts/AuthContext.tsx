@@ -30,6 +30,15 @@ type AuthContextValue = {
   updateProfile: (payload: { name?: string; avatar_url?: string }) => Promise<void>
   deleteAccount: () => Promise<void>
   logout: () => Promise<void>
+  getMfaStatus: () => Promise<{
+    currentLevel: string | null
+    nextLevel: string | null
+    factors: Array<{ id: string; friendly_name?: string; factor_type: string; status: string }>
+  }>
+  enrollAuthenticator: () => Promise<{ factorId: string; qrCode: string; secret: string }>
+  verifyAuthenticatorEnrollment: (payload: { factorId: string; code: string }) => Promise<void>
+  verifyAuthenticatorChallenge: (payload: { factorId: string; code: string }) => Promise<void>
+  removeMfaFactor: (factorId: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -147,38 +156,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       },
       resendVerification: async (email) => {
-        const { error } = await requireSupabase().auth.resend({
-          type: 'signup',
-          email,
-          options: {
-            emailRedirectTo: getAuthRedirectUrl(),
-          },
-        })
-        if (error) throw error
+        await authApi.resendVerification({ email })
       },
       forgotPassword: async (email) => {
-        const { error } = await requireSupabase().auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/reset-password`,
-        })
-        if (error) throw error
+        await authApi.forgotPassword({ email })
       },
       resetPassword: async (password) => {
-        const { error } = await requireSupabase().auth.updateUser({ password })
-        if (error) throw error
+        const accessToken = session?.access_token
+        if (!accessToken) throw new Error('Reset link expired. Request a new password reset email.')
+        await authApi.resetPassword(accessToken, { password })
+        await clearStaleAuthState()
       },
       changePassword: async ({ currentPassword, newPassword }) => {
-        const client = requireSupabase()
-        const email = session?.user?.email ?? profile?.email
-        if (!email) throw new Error('Could not verify your account email.')
-
-        const { error: verifyError } = await client.auth.signInWithPassword({
-          email,
-          password: currentPassword,
+        if (!token) throw new Error('Not signed in.')
+        await authApi.changePassword(token, {
+          current_password: currentPassword,
+          new_password: newPassword,
         })
-        if (verifyError) throw new Error('Current password is incorrect.')
-
-        const { error: updateError } = await client.auth.updateUser({ password: newPassword })
-        if (updateError) throw updateError
+        await clearStaleAuthState()
       },
       updateProfile: async (payload) => {
         if (!token) throw new Error('Not signed in.')
@@ -199,6 +194,62 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await supabase?.auth.signOut()
         setSession(null)
         setProfile(null)
+      },
+      getMfaStatus: async () => {
+        const client = requireSupabase()
+        const [{ data: levelData, error: levelError }, { data: factorData, error: factorError }] = await Promise.all([
+          client.auth.mfa.getAuthenticatorAssuranceLevel(),
+          client.auth.mfa.listFactors(),
+        ])
+        if (levelError) throw levelError
+        if (factorError) throw factorError
+
+        return {
+          currentLevel: levelData.currentLevel,
+          nextLevel: levelData.nextLevel,
+          factors: factorData.all.map((factor) => ({
+            id: factor.id,
+            friendly_name: factor.friendly_name ?? undefined,
+            factor_type: factor.factor_type,
+            status: factor.status,
+          })),
+        }
+      },
+      enrollAuthenticator: async () => {
+        const { data, error } = await requireSupabase().auth.mfa.enroll({
+          factorType: 'totp',
+          friendlyName: 'AIFlow authenticator',
+        })
+        if (error) throw error
+        return {
+          factorId: data.id,
+          qrCode: data.totp.qr_code,
+          secret: data.totp.secret,
+        }
+      },
+      verifyAuthenticatorEnrollment: async ({ factorId, code }) => {
+        const client = requireSupabase()
+        const { data: challenge, error: challengeError } = await client.auth.mfa.challenge({ factorId })
+        if (challengeError) throw challengeError
+        const { error } = await client.auth.mfa.verify({
+          factorId,
+          challengeId: challenge.id,
+          code,
+        })
+        if (error) throw error
+        const { data: sessionData } = await client.auth.getSession()
+        setSession(sessionData.session)
+      },
+      verifyAuthenticatorChallenge: async ({ factorId, code }) => {
+        const client = requireSupabase()
+        const { error } = await client.auth.mfa.challengeAndVerify({ factorId, code })
+        if (error) throw error
+        const { data: sessionData } = await client.auth.getSession()
+        setSession(sessionData.session)
+      },
+      removeMfaFactor: async (factorId) => {
+        const { error } = await requireSupabase().auth.mfa.unenroll({ factorId })
+        if (error) throw error
       },
     }),
     [clearStaleAuthState, loading, profile, refreshProfile, session, token],

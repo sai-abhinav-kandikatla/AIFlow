@@ -56,9 +56,9 @@ export const AuthCallbackPage = () => {
         const message = cleanAuthError(error)
         await clearStaleAuthState()
         toast.error({
-          title: 'Google sign-in did not finish',
+          title: 'Authentication did not finish',
           message,
-          recovery: 'Clear the saved OAuth state, then start a fresh Google connection. If this repeats, re-check that Supabase and Google Cloud use matching OAuth credentials.',
+          recovery: 'Clear the saved auth state, then start a fresh sign-in or password reset attempt.',
           action: {
             label: 'Clear cache & restart',
             onClick: async () => {
@@ -89,11 +89,11 @@ export const AuthCallbackPage = () => {
         navigate(destination, { replace: true })
       } catch (authError) {
         await clearStaleAuthState()
-        const message = authError instanceof Error ? authError.message : 'Could not finish Google sign-in'
+        const message = authError instanceof Error ? authError.message : 'Could not finish authentication'
         toast.error({
-          title: 'Google sign-in did not finish',
+          title: 'Authentication did not finish',
           message,
-          recovery: 'The OAuth code could not be exchanged for a session. Clear local auth state, retry Google, and verify the Supabase Google provider Client ID and Secret if it happens again.',
+          recovery: 'The auth code could not be exchanged for a session. Clear local auth state, then retry.',
           action: {
             label: 'Clear cache & restart',
             onClick: async () => {
@@ -114,7 +114,7 @@ export const AuthCallbackPage = () => {
     <div className="flex min-h-svh items-center justify-center bg-background p-4 text-muted-foreground">
       <div className="rounded-lg border bg-card p-6 text-center shadow-sm">
         <Loader2 className="mx-auto mb-3 h-6 w-6 animate-spin text-primary" />
-        <div className="font-medium text-foreground">Finishing Google sign-in</div>
+        <div className="font-medium text-foreground">Finishing authentication</div>
         <p className="mt-1 text-sm">Creating your session and opening the dashboard.</p>
       </div>
     </div>

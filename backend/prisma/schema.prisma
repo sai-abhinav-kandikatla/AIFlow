@@ -14,6 +14,11 @@ enum Plan {
   TEAM    @map("team")
 }
 
+enum Role {
+  USER  @map("user")
+  ADMIN @map("admin")
+}
+
 enum InputMethod {
   SHARE_LINK         @map("share_link")
   FILE_UPLOAD        @map("file_upload")
@@ -27,16 +32,22 @@ model User {
   name      String?
   avatarUrl String?  @map("avatar_url")
   plan      Plan     @default(FREE)
+  role      Role     @default(USER)
   paymentCustomerId             String?   @unique @map("stripe_customer_id")
   paymentSubscriptionId         String?   @unique @map("stripe_subscription_id")
   subscriptionStatus            String?   @map("subscription_status")
   subscriptionCurrentPeriodEnd  DateTime? @map("subscription_current_period_end")
   promptRegenerationsThisMonth  Int       @default(0) @map("prompt_regenerations_this_month")
   promptRegenerationMonth       DateTime? @map("prompt_regeneration_month")
+  failedLoginAttempts           Int       @default(0) @map("failed_login_attempts")
+  lockedUntil                   DateTime? @map("locked_until")
+  lastLoginAt                   DateTime? @map("last_login_at")
+  lastPasswordResetAt           DateTime? @map("last_password_reset_at")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  threads Thread[]
+  threads        Thread[]
+  securityEvents SecurityEvent[]
 
   @@map("users")
 }
@@ -75,4 +86,24 @@ model GeneratedPrompt {
   @@unique([threadId, modelName])
   @@index([threadId])
   @@map("generated_prompts")
+}
+
+model SecurityEvent {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String?  @map("user_id") @db.Uuid
+  emailHash String?  @map("email_hash")
+  ipHash    String?  @map("ip_hash")
+  eventType String   @map("event_type")
+  severity  String   @default("info")
+  metadata  Json?
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([eventType, createdAt])
+  @@index([emailHash, createdAt])
+  @@index([ipHash, createdAt])
+  @@index([userId, createdAt])
+  @@map("security_events")
 }

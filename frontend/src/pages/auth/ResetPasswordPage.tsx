@@ -20,7 +20,7 @@ export const ResetPasswordPage = () => {
     try {
       await resetPassword(password)
       toast.success('Password updated')
-      navigate('/app/settings')
+      navigate('/login')
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Could not reset password')
     } finally {
