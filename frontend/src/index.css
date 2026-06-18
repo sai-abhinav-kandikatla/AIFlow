@@ -26,6 +26,10 @@
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 :root {
   color-scheme: light;
   --background: #fafafa;

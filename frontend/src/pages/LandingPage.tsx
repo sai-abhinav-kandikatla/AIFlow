@@ -15,6 +15,8 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { Badge } from '@/components/ui/badge'
@@ -103,6 +105,15 @@ const faqs = [
   ['What if a share link blocks extraction?', 'Use a pasted transcript or export upload. Some providers hide transcripts behind browser-only rendering or protection.'],
 ]
 
+const HEADER_OFFSET = 80
+
+const scrollToSection = (id: string) => {
+  const element = document.getElementById(id)
+  if (!element) return
+  const top = element.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET
+  window.scrollTo({ top, behavior: 'smooth' })
+}
+
 const ProductPreview = () => (
   <div className="relative">
     <div className="absolute inset-0 translate-y-6 rounded-lg bg-primary/20 blur-3xl" />
@@ -168,7 +179,19 @@ const ProductPreview = () => (
   </div>
 )
 
-export const LandingPage = () => (
+export const LandingPage = () => {
+  const [demoHighlight, setDemoHighlight] = useState(false)
+
+  const handleScrollTo = useCallback((id: string, highlight = false) => {
+    scrollToSection(id)
+    if (highlight) {
+      setDemoHighlight(false)
+      window.setTimeout(() => setDemoHighlight(true), 450)
+      window.setTimeout(() => setDemoHighlight(false), 1600)
+    }
+  }, [])
+
+  return (
   <div className="min-h-svh overflow-hidden bg-[#090b10] text-white">
     <header className="fixed inset-x-0 top-0 z-30 border-b border-white/10 bg-[#090b10]/75 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-8">
@@ -180,7 +203,9 @@ export const LandingPage = () => (
         </Link>
         <nav className="hidden items-center gap-6 text-sm text-zinc-400 md:flex">
           <a href="#features" className="hover:text-white">Features</a>
-          <a href="#demo" className="hover:text-white">Demo</a>
+          <button type="button" onClick={() => handleScrollTo('demo', true)} className="hover:text-white">
+            Demo
+          </button>
           <a href="#pricing" className="hover:text-white">Pricing</a>
           <a href="#faq" className="hover:text-white">FAQ</a>
         </nav>
@@ -189,9 +214,13 @@ export const LandingPage = () => (
           <Link to="/login" className={buttonVariants({ variant: 'ghost', className: 'text-white hover:bg-white/10' })}>
             Login
           </Link>
-          <Link to="/signup" className={buttonVariants({ className: 'hidden bg-white text-zinc-950 hover:bg-zinc-200 sm:inline-flex' })}>
-            Start Free
-          </Link>
+          <button
+            type="button"
+            onClick={() => handleScrollTo('get-started')}
+            className={buttonVariants({ className: 'hidden bg-white text-zinc-950 hover:bg-zinc-200 sm:inline-flex' })}
+          >
+            Get Started
+          </button>
         </div>
       </div>
     </header>
@@ -209,14 +238,22 @@ export const LandingPage = () => (
             Import a chat from Claude, ChatGPT, Gemini, DeepSeek, or Grok. AIFlow maps the context and generates a clean handoff prompt for the model you want to use next.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link to="/signup" className={buttonVariants({ size: 'lg', className: 'bg-white text-zinc-950 hover:bg-zinc-200' })}>
-              Start Free
+            <button
+              type="button"
+              onClick={() => handleScrollTo('get-started')}
+              className={buttonVariants({ size: 'lg', className: 'bg-white text-zinc-950 hover:bg-zinc-200' })}
+            >
+              Get Started
               <ArrowRight className="h-4 w-4" />
-            </Link>
-            <a href="#demo" className={buttonVariants({ variant: 'outline', size: 'lg', className: 'border-white/15 bg-white/5 text-white hover:bg-white/10' })}>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleScrollTo('demo', true)}
+              className={buttonVariants({ variant: 'outline', size: 'lg', className: 'border-white/15 bg-white/5 text-white hover:bg-white/10' })}
+            >
               <Play className="h-4 w-4" />
               See Handoff Demo
-            </a>
+            </button>
           </div>
           <div className="mt-8 flex flex-wrap gap-3 text-sm text-zinc-400">
             {['Share links', 'TXT/JSON exports', 'Raw chat logs', 'Manual summaries'].map((item) => (
@@ -243,7 +280,7 @@ export const LandingPage = () => (
         </div>
       </section>
 
-      <section id="features" className="mx-auto max-w-7xl px-4 py-16 md:px-8">
+      <section id="features" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-16 md:px-8">
         <div className="mb-8 max-w-2xl">
           <p className="text-sm font-semibold text-primary">What AIFlow actually does</p>
           <h2 className="mt-2 text-4xl font-semibold">Turn messy AI chats into reusable model handoffs.</h2>
@@ -269,8 +306,19 @@ export const LandingPage = () => (
         </div>
       </section>
 
-      <section id="demo" className="mx-auto max-w-7xl px-4 py-16 md:px-8">
-        <div className="grid gap-6 lg:grid-cols-[1fr_0.8fr] lg:items-center">
+      <section id="demo" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-16 md:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 32 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.25 }}
+          transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+          animate={
+            demoHighlight
+              ? { boxShadow: '0 0 0 2px rgba(37, 99, 235, 0.45), 0 24px 48px -24px rgba(37, 99, 235, 0.35)' }
+              : { boxShadow: '0 0 0 0px rgba(37, 99, 235, 0), 0 0 0 0px rgba(37, 99, 235, 0)' }
+          }
+          className="grid gap-6 rounded-2xl p-2 lg:grid-cols-[1fr_0.8fr] lg:items-center"
+        >
           <div>
             <p className="text-sm font-semibold text-primary">Demo flow</p>
             <h2 className="mt-2 text-4xl font-semibold">From conversation link to continuation prompt.</h2>
@@ -278,33 +326,53 @@ export const LandingPage = () => (
               Capture the prior chat, let AIFlow extract the state, then copy the handoff for the model you want to use next.
             </p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {['Import share link', 'Extract decisions', 'Generate handoffs', 'Resume elsewhere'].map((item) => (
-                <div key={item} className="flex items-center gap-2 rounded-lg border bg-card p-3 text-sm">
+              {['Import share link', 'Extract decisions', 'Generate handoffs', 'Resume elsewhere'].map((item, index) => (
+                <motion.div
+                  key={item}
+                  initial={{ opacity: 0, x: -12 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex items-center gap-2 rounded-lg border bg-card p-3 text-sm"
+                >
                   <CheckCircle2 className="h-4 w-4 text-accent" />
                   {item}
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
-          <div className="rounded-lg border bg-card p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
+            className="rounded-lg border bg-card p-4"
+          >
             <div className="mb-4 flex items-center justify-between">
               <span className="text-sm font-semibold">Handoff Builder</span>
               <span className="rounded-full bg-accent/10 px-3 py-1 text-xs text-accent">Ready to copy</span>
             </div>
             <div className="grid gap-3">
               {handoffSteps.map(([label, text], index) => (
-                <div key={label} className="flex items-center gap-3 rounded-lg border bg-background/70 p-4">
+                <motion.div
+                  key={label}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.35, delay: 0.18 + index * 0.08, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex items-center gap-3 rounded-lg border bg-background/70 p-4"
+                >
                   <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-sm font-semibold text-primary">{index + 1}</span>
                   <div>
                     <div className="text-xs uppercase text-muted-foreground">{label}</div>
                     <div className="font-medium">{text}</div>
                   </div>
                   <ChevronRight className="ml-auto h-4 w-4 text-muted-foreground" />
-                </div>
+                </motion.div>
               ))}
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-16 md:px-8">
@@ -340,7 +408,7 @@ export const LandingPage = () => (
         </div>
       </section>
 
-      <section id="pricing" className="mx-auto max-w-7xl px-4 py-16 md:px-8">
+      <section id="pricing" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-16 md:px-8">
         <div className="mb-8 max-w-2xl">
           <p className="text-sm font-semibold text-primary">Pricing</p>
           <h2 className="mt-2 text-4xl font-semibold">Start free. Upgrade when you need more handoffs.</h2>
@@ -366,7 +434,7 @@ export const LandingPage = () => (
         </div>
       </section>
 
-      <section id="faq" className="mx-auto max-w-4xl px-4 py-16 md:px-8">
+      <section id="faq" className="mx-auto max-w-4xl scroll-mt-24 px-4 py-16 md:px-8">
         <div className="mb-8 text-center">
           <p className="text-sm font-semibold text-primary">FAQ</p>
           <h2 className="mt-2 text-4xl font-semibold">Questions before you transfer?</h2>
@@ -383,8 +451,14 @@ export const LandingPage = () => (
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-16 md:px-8">
-        <div className="overflow-hidden rounded-lg border bg-[#090b10] p-8 text-white md:p-12">
+      <section id="get-started" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-16 md:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 28 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.35 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="overflow-hidden rounded-lg border bg-[#090b10] p-8 text-white md:p-12"
+        >
           <div className="max-w-3xl">
             <h2 className="text-4xl font-semibold md:text-5xl">Capture Your First AI Conversation</h2>
             <p className="mt-4 text-lg leading-8 text-zinc-300">
@@ -392,7 +466,7 @@ export const LandingPage = () => (
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link to="/signup" className={buttonVariants({ size: 'lg', className: 'bg-white text-zinc-950 hover:bg-zinc-200' })}>
-                Start Free
+                Get Started
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link to="/login" className={buttonVariants({ variant: 'outline', size: 'lg', className: 'border-white/15 bg-white/5 text-white hover:bg-white/10' })}>
@@ -400,8 +474,9 @@ export const LandingPage = () => (
               </Link>
             </div>
           </div>
-        </div>
+        </motion.div>
       </section>
     </main>
   </div>
-)
+  )
+}
