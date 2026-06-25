@@ -1,15 +1,17 @@
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Home, Layers3, Menu, Plus, Settings, Sparkles } from 'lucide-react'
+import { ArrowLeft, Download, Home, Layers3, Menu, Plus, Settings, Sparkles } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 
 const navItems = [
   { label: 'Dashboard', href: '/app', icon: Home, end: true },
   { label: 'Capture Context', href: '/app/threads/new', icon: Plus },
   { label: 'Flows', href: '/app/threads', icon: Layers3 },
+  { label: 'Export', href: '/app/export', icon: Download },
   { label: 'Settings', href: '/app/settings', icon: Settings },
 ]
 
@@ -17,6 +19,7 @@ const pageTitleForPath = (pathname: string) => {
   if (pathname === '/app') return 'Dashboard'
   if (pathname.startsWith('/app/threads/new')) return 'Capture Context'
   if (pathname.startsWith('/app/threads')) return 'Flows'
+  if (pathname.startsWith('/app/export')) return 'Export Flows'
   if (pathname.startsWith('/app/settings')) return 'Settings'
   return 'AI Flow'
 }
@@ -37,6 +40,27 @@ export const AppLayout = () => {
   const displayEmail = profile?.email ?? 'Profile not loaded'
   const initial = displayName.slice(0, 1).toUpperCase()
   const pageTitle = pageTitleForPath(location.pathname)
+
+  // Register keyboard shortcuts
+  useKeyboardShortcuts({
+    onNewThread: () => {
+      navigate('/app/threads/new')
+    },
+    onSearch: () => {
+      if (location.pathname === '/app/threads') {
+        const searchInput = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement | null
+        if (searchInput) {
+          searchInput.focus()
+          searchInput.select()
+        }
+      } else {
+        navigate('/app/threads')
+      }
+    },
+    onSettings: () => {
+      navigate('/app/settings')
+    },
+  })
 
   useEffect(() => {
     if (profile && !profile.name?.trim()) {
@@ -132,6 +156,17 @@ export const AppLayout = () => {
             <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setOpen(true)} aria-label="Open menu">
               <Menu className="h-5 w-5" />
             </Button>
+            {location.pathname !== '/app' && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
+                onClick={() => navigate(-1)}
+                aria-label="Go back"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            )}
             <h1 className="text-base font-semibold tracking-tight md:text-lg">{pageTitle}</h1>
           </div>
           <div className="flex items-center gap-2">

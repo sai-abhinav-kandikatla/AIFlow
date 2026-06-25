@@ -28,10 +28,16 @@
 
 html {
   scroll-behavior: smooth;
+  letter-spacing: 0;
 }
 
 :root {
   color-scheme: light;
+  --marketing-hero-glow: linear-gradient(135deg, rgba(37, 99, 235, 0.14), rgba(124, 58, 237, 0.08) 48%, transparent 92%);
+  --marketing-grid-line: rgba(15, 17, 23, 0.08);
+  --marketing-grid-opacity: 0.45;
+  --marketing-preview-bg: #0d1117;
+  --marketing-preview-border: rgba(255, 255, 255, 0.12);
   --background: #fafafa;
   --foreground: #0f1117;
   --card: #ffffff;
@@ -58,6 +64,11 @@ html {
 
 .dark {
   color-scheme: dark;
+  --marketing-hero-glow: linear-gradient(135deg, rgba(49, 87, 255, 0.28), rgba(124, 58, 237, 0.16) 48%, rgba(9, 11, 16, 0) 92%);
+  --marketing-grid-line: rgba(255, 255, 255, 0.07);
+  --marketing-grid-opacity: 0.22;
+  --marketing-preview-bg: rgba(9, 9, 11, 0.88);
+  --marketing-preview-border: rgba(255, 255, 255, 0.12);
   --background: #080c14;
   --foreground: #f0f4f8;
   --card: #0d1117;
@@ -85,10 +96,6 @@ html {
   border-color: var(--border);
 }
 
-html {
-  letter-spacing: 0;
-}
-
 body {
   margin: 0;
   min-width: 320px;
@@ -113,7 +120,62 @@ select {
 }
 
 .hero-scene {
-  background: #080c14;
+  background: var(--background);
+  color: var(--foreground);
+  position: relative;
+}
+
+.hero-scene::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--marketing-hero-glow);
+  pointer-events: none;
+}
+
+.hero-scene > * {
+  position: relative;
+  z-index: 1;
+}
+
+.marketing-hero {
+  position: relative;
+  isolation: isolate;
+}
+
+.marketing-hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--marketing-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--marketing-grid-line) 1px, transparent 1px);
+  background-size: 56px 56px;
+  opacity: var(--marketing-grid-opacity);
+  pointer-events: none;
+}
+
+.marketing-hero-glow {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 820px;
+  background: var(--marketing-hero-glow);
+  pointer-events: none;
+}
+
+.marketing-preview {
+  border: 1px solid var(--marketing-preview-border);
+  background: var(--marketing-preview-bg);
+  color: #f4f4f5;
+}
+
+.marketing-fade-down {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 120px;
+  background: linear-gradient(to bottom, transparent, var(--background));
+  pointer-events: none;
 }
 
 .workspace-shell {

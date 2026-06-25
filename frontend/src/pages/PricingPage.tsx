@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CheckCircle2, CreditCard, Loader2, Sparkles } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, CreditCard, Loader2, Sparkles } from 'lucide-react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -175,10 +175,21 @@ export const PricingPage = () => {
     <div className="min-h-svh bg-background">
       <header className="border-b">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-8">
-          <Link to="/" className="flex items-center gap-3 font-semibold">
-            <Sparkles className="h-5 w-5 text-primary" />
-            AI Flow
-          </Link>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
+              onClick={() => navigate(-1)}
+              aria-label="Go back"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <Link to="/" className="flex items-center gap-3 font-semibold">
+              <Sparkles className="h-5 w-5 text-primary" />
+              AI Flow
+            </Link>
+          </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
             {token ? (
@@ -194,19 +205,19 @@ export const PricingPage = () => {
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-4 py-14 md:px-8">
-        <div className="max-w-2xl">
+        <div className="max-w-2xl animate-fade-slide-up">
           <h1 className="text-4xl font-semibold md:text-5xl">Plans for every AI Flow volume</h1>
           <p className="mt-4 text-lg leading-8 text-muted-foreground">
             Upgrade with Razorpay Checkout for recurring subscriptions, invoices, and cancellation from AI Flow settings.
           </p>
         </div>
         <div className="mt-10 grid gap-4 md:grid-cols-4">
-          {plans.map((plan) => {
+          {plans.map((plan, index) => {
             const isCurrent = profile?.plan === plan.tier
             const isLoading = loadingPlan === plan.tier
 
             return (
-              <Card key={plan.name} className={cn('lift', plan.featured && 'border-primary')}>
+              <Card key={plan.name} className={cn('lift animate-fade-slide-up', plan.featured && 'border-primary', `stagger-${Math.min(index + 1, 5)}`)}>
                 <CardHeader>
                   <CardTitle>{plan.name}</CardTitle>
                   <div className="text-4xl font-semibold">

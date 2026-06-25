@@ -8,6 +8,7 @@ import authRoutes from "./routes/auth.js";
 import billingRoutes, { razorpayWebhook } from "./routes/billing.js";
 import threadRoutes from "./routes/threads.js";
 import { errorHandler } from "./middleware/error.js";
+import { prisma } from "./lib/prisma.js";
 
 const app = express();
 app.set("trust proxy", 1);
@@ -83,12 +84,34 @@ const healthPayload = () =>
     }
 };
 
-app.get("/health", (_req, res) => {
-  res.json(healthPayload());
+app.get("/health", async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json(healthPayload());
+  } catch (error) {
+    console.error("Health check DB connection failed:", error);
+    res.status(503).json({
+      ok: false,
+      service: "aiflow-api",
+      error: "Database connection failed",
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
 });
 
-app.get("/api/health", (_req, res) => {
-  res.json(healthPayload());
+app.get("/api/health", async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json(healthPayload());
+  } catch (error) {
+    console.error("Health check DB connection failed:", error);
+    res.status(503).json({
+      ok: false,
+      service: "aiflow-api",
+      error: "Database connection failed",
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
 });
 
 app.use("/api/auth", authRoutes);
@@ -100,6 +123,6 @@ app.use((_req, res) => {
 });
 app.use(errorHandler);
 
-app.listen(env.PORT, () => {
-  console.log(`AIFlow API running on http://localhost:${env.PORT}`);
+app.listen(env.PORT, "0.0.0.0", () => {
+  console.log(`AIFlow API running on http://0.0.0.0:${env.PORT}`);
 });

@@ -64,6 +64,8 @@ model Thread {
   tags         Json
   rawInput     String      @map("raw_input") @db.Text
   inputMethod  InputMethod @map("input_method")
+  shareToken   String?     @unique @map("share_token")
+  isShared     Boolean     @default(false) @map("is_shared")
   createdAt    DateTime    @default(now()) @map("created_at")
   updatedAt    DateTime    @updatedAt @map("updated_at")
 

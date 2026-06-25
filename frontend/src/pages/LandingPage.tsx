@@ -15,13 +15,15 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
+import { ScrollReveal } from '@/components/ui/scroll-reveal'
 import { Badge } from '@/components/ui/badge'
 import { buttonVariants } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { MOTION_EASE, motionDuration, staggerDelay } from '@/lib/motion'
 import { cn } from '@/lib/utils'
 
 const trustItems = [
@@ -115,9 +117,9 @@ const scrollToSection = (id: string) => {
 }
 
 const ProductPreview = () => (
-  <div className="relative">
+  <ScrollReveal className="relative" y={24} delay={0.08}>
     <div className="absolute inset-0 translate-y-6 rounded-lg bg-primary/20 blur-3xl" />
-    <div className="relative overflow-hidden rounded-lg border border-white/12 bg-zinc-950/85 shadow-2xl shadow-black/40 backdrop-blur">
+    <div className="marketing-preview relative overflow-hidden rounded-lg shadow-2xl shadow-black/20 backdrop-blur">
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="h-3 w-3 rounded-full bg-red-400" />
@@ -176,307 +178,315 @@ const ProductPreview = () => (
         </aside>
       </div>
     </div>
-  </div>
+  </ScrollReveal>
 )
 
 export const LandingPage = () => {
+  const reduceMotion = useReducedMotion()
   const [demoHighlight, setDemoHighlight] = useState(false)
 
   const handleScrollTo = useCallback((id: string, highlight = false) => {
     scrollToSection(id)
-    if (highlight) {
+    if (highlight && !reduceMotion) {
       setDemoHighlight(false)
       window.setTimeout(() => setDemoHighlight(true), 450)
       window.setTimeout(() => setDemoHighlight(false), 1600)
     }
-  }, [])
+  }, [reduceMotion])
+
+  const DemoWrapper = reduceMotion ? 'div' : motion.div
 
   return (
-  <div className="min-h-svh overflow-hidden bg-[#090b10] text-white">
-    <header className="fixed inset-x-0 top-0 z-30 border-b border-white/10 bg-[#090b10]/75 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-8">
-        <Link to="/" className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white text-zinc-950">
-            <Sparkles className="h-4 w-4" />
-          </div>
-          <span className="font-semibold">AI Flow</span>
-        </Link>
-        <nav className="hidden items-center gap-6 text-sm text-zinc-400 md:flex">
-          <a href="#features" className="hover:text-white">Features</a>
-          <button type="button" onClick={() => handleScrollTo('demo', true)} className="hover:text-white">
-            Demo
-          </button>
-          <a href="#pricing" className="hover:text-white">Pricing</a>
-          <a href="#faq" className="hover:text-white">FAQ</a>
-        </nav>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <Link to="/login" className={buttonVariants({ variant: 'ghost', className: 'text-white hover:bg-white/10' })}>
-            Login
+    <div className="min-h-svh bg-background text-foreground">
+      <header className="fixed inset-x-0 top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-8">
+          <Link to="/" className="flex items-center gap-3 font-semibold">
+            <Sparkles className="h-5 w-5 text-primary" />
+            AI Flow
           </Link>
-          <button
-            type="button"
-            onClick={() => handleScrollTo('get-started')}
-            className={buttonVariants({ className: 'hidden bg-white text-zinc-950 hover:bg-zinc-200 sm:inline-flex' })}
-          >
-            Get Started
-          </button>
-        </div>
-      </div>
-    </header>
-
-    <section className="relative px-4 pb-20 pt-32 md:px-8 md:pt-40">
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.07)_1px,transparent_1px)] bg-[size:56px_56px] opacity-20" />
-      <div className="absolute inset-x-0 top-0 h-[820px] bg-[linear-gradient(135deg,rgba(49,87,255,0.28),rgba(124,58,237,0.16)_48%,rgba(9,11,16,0)_92%)]" />
-      <div className="relative mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-        <div>
-          <Badge className="border-white/15 bg-white/10 text-white">AI conversation transfer</Badge>
-          <h1 className="mt-6 max-w-4xl text-4xl font-semibold leading-[1.08] md:text-6xl">
-            Move AI conversations between models without losing context
-          </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-300">
-            Import a chat from Claude, ChatGPT, Gemini, DeepSeek, or Grok. AIFlow maps the context and generates a clean handoff prompt for the model you want to use next.
-          </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
+            <button type="button" onClick={() => handleScrollTo('features')} className="transition hover:text-foreground">
+              Features
+            </button>
+            <button type="button" onClick={() => handleScrollTo('demo', true)} className="transition hover:text-foreground">
+              Demo
+            </button>
+            <button type="button" onClick={() => handleScrollTo('pricing')} className="transition hover:text-foreground">
+              Pricing
+            </button>
+            <button type="button" onClick={() => handleScrollTo('faq')} className="transition hover:text-foreground">
+              FAQ
+            </button>
+          </nav>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Link to="/login" className={buttonVariants({ variant: 'ghost' })}>
+              Login
+            </Link>
             <button
               type="button"
               onClick={() => handleScrollTo('get-started')}
-              className={buttonVariants({ size: 'lg', className: 'bg-white text-zinc-950 hover:bg-zinc-200' })}
+              className={buttonVariants({ className: 'hidden sm:inline-flex' })}
             >
               Get Started
-              <ArrowRight className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => handleScrollTo('demo', true)}
-              className={buttonVariants({ variant: 'outline', size: 'lg', className: 'border-white/15 bg-white/5 text-white hover:bg-white/10' })}
-            >
-              <Play className="h-4 w-4" />
-              See Handoff Demo
             </button>
           </div>
-          <div className="mt-8 flex flex-wrap gap-3 text-sm text-zinc-400">
-            {['Share links', 'TXT/JSON exports', 'Raw chat logs', 'Manual summaries'].map((item) => (
-              <span key={item} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1">{item}</span>
-            ))}
-          </div>
         </div>
-        <ProductPreview />
-      </div>
-    </section>
+      </header>
 
-    <main className="relative bg-background text-foreground">
-      <section className="mx-auto max-w-7xl px-4 py-10 md:px-8">
-        <div className="grid gap-3 md:grid-cols-4">
-          {trustItems.map((item) => {
-            const Icon = item.icon
-            return (
-              <div key={item.label} className="flex items-center gap-3 rounded-lg border bg-card/80 p-4">
-                <Icon className="h-5 w-5 text-primary" />
-                <span className="text-sm font-medium">{item.label}</span>
-              </div>
-            )
-          })}
-        </div>
-      </section>
-
-      <section id="features" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-16 md:px-8">
-        <div className="mb-8 max-w-2xl">
-          <p className="text-sm font-semibold text-primary">What AIFlow actually does</p>
-          <h2 className="mt-2 text-4xl font-semibold">Turn messy AI chats into reusable model handoffs.</h2>
-          <p className="mt-4 leading-7 text-muted-foreground">
-            The product is focused on one practical job: preserve conversation state and help you continue that work in another AI model.
-          </p>
-        </div>
-        <div className="grid gap-4 md:grid-cols-4">
-          {bentoFeatures.map((feature) => {
-            const Icon = feature.icon
-            return (
-              <Card key={feature.title} className={cn('lift overflow-hidden', feature.className)}>
-                <CardContent className="p-5">
-                  <div className="mb-6 flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary">
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <h3 className="text-lg font-semibold">{feature.title}</h3>
-                  <p className="mt-3 text-sm leading-6 text-muted-foreground">{feature.text}</p>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
-      </section>
-
-      <section id="demo" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-16 md:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 32 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.25 }}
-          transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-          animate={
-            demoHighlight
-              ? { boxShadow: '0 0 0 2px rgba(37, 99, 235, 0.45), 0 24px 48px -24px rgba(37, 99, 235, 0.35)' }
-              : { boxShadow: '0 0 0 0px rgba(37, 99, 235, 0), 0 0 0 0px rgba(37, 99, 235, 0)' }
-          }
-          className="grid gap-6 rounded-2xl p-2 lg:grid-cols-[1fr_0.8fr] lg:items-center"
-        >
-          <div>
-            <p className="text-sm font-semibold text-primary">Demo flow</p>
-            <h2 className="mt-2 text-4xl font-semibold">From conversation link to continuation prompt.</h2>
-            <p className="mt-4 leading-7 text-muted-foreground">
-              Capture the prior chat, let AIFlow extract the state, then copy the handoff for the model you want to use next.
+      <section className="marketing-hero relative px-4 pb-24 pt-32 md:px-8 md:pt-40">
+        <div className="marketing-hero-grid" />
+        <div className="marketing-hero-glow" />
+        <div className="marketing-fade-down" />
+        <div className="relative mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <ScrollReveal>
+            <Badge className="border-border/80 bg-muted/80 text-foreground">
+              AI conversation transfer
+            </Badge>
+            <h1 className="mt-6 max-w-4xl text-4xl font-semibold leading-[1.08] md:text-6xl">
+              Move AI conversations between models without losing context
+            </h1>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
+              Import a chat from Claude, ChatGPT, Gemini, DeepSeek, or Grok. AIFlow maps the context and generates a clean handoff prompt for the model you want to use next.
             </p>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {['Import share link', 'Extract decisions', 'Generate handoffs', 'Resume elsewhere'].map((item, index) => (
-                <motion.div
-                  key={item}
-                  initial={{ opacity: 0, x: -12 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
-                  className="flex items-center gap-2 rounded-lg border bg-card p-3 text-sm"
-                >
-                  <CheckCircle2 className="h-4 w-4 text-accent" />
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => handleScrollTo('get-started')}
+                className={buttonVariants({ size: 'lg' })}
+              >
+                Get Started
+                <ArrowRight className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleScrollTo('demo', true)}
+                className={buttonVariants({ variant: 'outline', size: 'lg' })}
+              >
+                <Play className="h-4 w-4" />
+                See Handoff Demo
+              </button>
+            </div>
+            <div className="mt-8 flex flex-wrap gap-3 text-sm text-muted-foreground">
+              {['Share links', 'TXT/JSON exports', 'Raw chat logs', 'Manual summaries'].map((item) => (
+                <span key={item} className="rounded-full border border-border bg-muted/60 px-3 py-1">
                   {item}
-                </motion.div>
+                </span>
               ))}
             </div>
-          </div>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
-            className="rounded-lg border bg-card p-4"
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-sm font-semibold">Handoff Builder</span>
-              <span className="rounded-full bg-accent/10 px-3 py-1 text-xs text-accent">Ready to copy</span>
-            </div>
-            <div className="grid gap-3">
-              {handoffSteps.map(([label, text], index) => (
-                <motion.div
-                  key={label}
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.35, delay: 0.18 + index * 0.08, ease: [0.16, 1, 0.3, 1] }}
-                  className="flex items-center gap-3 rounded-lg border bg-background/70 p-4"
-                >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-sm font-semibold text-primary">{index + 1}</span>
-                  <div>
-                    <div className="text-xs uppercase text-muted-foreground">{label}</div>
-                    <div className="font-medium">{text}</div>
+          </ScrollReveal>
+          <ProductPreview />
+        </div>
+      </section>
+
+      <main className="relative bg-background text-foreground">
+        <section className="mx-auto max-w-7xl px-4 py-10 md:px-8">
+          <div className="grid gap-3 md:grid-cols-4">
+            {trustItems.map((item, index) => {
+              const Icon = item.icon
+              return (
+                <ScrollReveal key={item.label} delay={staggerDelay(index)}>
+                  <div className="flex items-center gap-3 rounded-lg border bg-card/80 p-4 lift">
+                    <Icon className="h-5 w-5 text-primary" />
+                    <span className="text-sm font-medium">{item.label}</span>
                   </div>
-                  <ChevronRight className="ml-auto h-4 w-4 text-muted-foreground" />
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </motion.div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 py-16 md:px-8">
-        <div className="grid gap-4 md:grid-cols-3">
-          {howItWorks.map(([title, text], index) => (
-            <Card key={title} className="lift">
-              <CardContent className="p-6">
-                <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">0{index + 1}</div>
-                <h3 className="text-xl font-semibold">{title}</h3>
-                <p className="mt-3 text-sm leading-6 text-muted-foreground">{text}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 py-16 md:px-8">
-        <div className="mb-8 flex items-end justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold text-primary">Reliability</p>
-            <h2 className="mt-2 text-4xl font-semibold">Clear limits, useful fallbacks.</h2>
+                </ScrollReveal>
+              )
+            })}
           </div>
-        </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          {reliabilityNotes.map(([title, text]) => (
-            <Card key={title} className="lift">
-              <CardContent className="p-6">
-                <div className="font-semibold">{title}</div>
-                <p className="mt-3 text-sm leading-6 text-muted-foreground">{text}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
+        </section>
 
-      <section id="pricing" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-16 md:px-8">
-        <div className="mb-8 max-w-2xl">
-          <p className="text-sm font-semibold text-primary">Pricing</p>
-          <h2 className="mt-2 text-4xl font-semibold">Start free. Upgrade when you need more handoffs.</h2>
-        </div>
-        <div className="grid gap-4 lg:grid-cols-4">
-          {pricing.map(({ name, price, subtitle, items }) => (
-            <Card key={name} className={cn('lift', name === 'Pro' && 'border-primary')}>
-              <CardContent className="p-6">
-                <div className="text-sm font-medium text-muted-foreground">{name}</div>
-                <div className="mt-3 text-3xl font-semibold">{price}<span className="text-base text-muted-foreground">{price === 'Custom' ? '' : '/month'}</span></div>
-                <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>
-                <div className="mt-6 space-y-3 text-sm text-muted-foreground">
-                  {items.map((item) => (
-                    <div key={item} className="flex gap-2">
+        <section id="features" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-16 md:px-8">
+          <ScrollReveal className="mb-8 max-w-2xl">
+            <p className="text-sm font-semibold text-primary">What AIFlow actually does</p>
+            <h2 className="mt-2 text-4xl font-semibold">Turn messy AI chats into reusable model handoffs.</h2>
+            <p className="mt-4 leading-7 text-muted-foreground">
+              The product is focused on one practical job: preserve conversation state and help you continue that work in another AI model.
+            </p>
+          </ScrollReveal>
+          <div className="grid gap-4 md:grid-cols-4">
+            {bentoFeatures.map((feature, index) => {
+              const Icon = feature.icon
+              return (
+                <ScrollReveal key={feature.title} delay={staggerDelay(index, 0.05, 0.08)} className={feature.className}>
+                  <Card className="lift h-full overflow-hidden">
+                    <CardContent className="p-5">
+                      <div className="mb-6 flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <h3 className="text-lg font-semibold">{feature.title}</h3>
+                      <p className="mt-3 text-sm leading-6 text-muted-foreground">{feature.text}</p>
+                    </CardContent>
+                  </Card>
+                </ScrollReveal>
+              )
+            })}
+          </div>
+        </section>
+
+        <section id="demo" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-16 md:px-8">
+          <DemoWrapper
+            {...(!reduceMotion && {
+              initial: { opacity: 0, y: 32 },
+              whileInView: { opacity: 1, y: 0 },
+              viewport: { once: true, amount: 0.25 },
+              transition: { duration: motionDuration.slow, ease: MOTION_EASE },
+              animate: demoHighlight
+                ? { boxShadow: '0 0 0 2px color-mix(in oklab, var(--primary) 45%, transparent), 0 24px 48px -24px color-mix(in oklab, var(--primary) 28%, transparent)' }
+                : { boxShadow: '0 0 0 0px transparent, 0 0 0 0px transparent' },
+            })}
+            className="grid gap-6 rounded-2xl border border-transparent p-2 transition-[box-shadow,border-color] duration-300 lg:grid-cols-[1fr_0.8fr] lg:items-center"
+          >
+            <ScrollReveal>
+              <p className="text-sm font-semibold text-primary">Demo flow</p>
+              <h2 className="mt-2 text-4xl font-semibold">From conversation link to continuation prompt.</h2>
+              <p className="mt-4 leading-7 text-muted-foreground">
+                Capture the prior chat, let AIFlow extract the state, then copy the handoff for the model you want to use next.
+              </p>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                {['Import share link', 'Extract decisions', 'Generate handoffs', 'Resume elsewhere'].map((item, index) => (
+                  <ScrollReveal key={item} delay={staggerDelay(index, 0.06, 0.12)} x={-12}>
+                    <div className="flex items-center gap-2 rounded-lg border bg-card p-3 text-sm">
                       <CheckCircle2 className="h-4 w-4 text-accent" />
                       {item}
                     </div>
+                  </ScrollReveal>
+                ))}
+              </div>
+            </ScrollReveal>
+            <ScrollReveal delay={0.12} scale={0.97}>
+              <div className="rounded-lg border bg-card p-4">
+                <div className="mb-4 flex items-center justify-between">
+                  <span className="text-sm font-semibold">Handoff Builder</span>
+                  <span className="rounded-full bg-accent/10 px-3 py-1 text-xs text-accent">Ready to copy</span>
+                </div>
+                <div className="grid gap-3">
+                  {handoffSteps.map(([label, text], index) => (
+                    <ScrollReveal key={label} delay={staggerDelay(index, 0.06, 0.16)}>
+                      <div className="flex items-center gap-3 rounded-lg border bg-background/70 p-4">
+                        <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-sm font-semibold text-primary">{index + 1}</span>
+                        <div>
+                          <div className="text-xs uppercase text-muted-foreground">{label}</div>
+                          <div className="font-medium">{text}</div>
+                        </div>
+                        <ChevronRight className="ml-auto h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </ScrollReveal>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
+              </div>
+            </ScrollReveal>
+          </DemoWrapper>
+        </section>
 
-      <section id="faq" className="mx-auto max-w-4xl scroll-mt-24 px-4 py-16 md:px-8">
-        <div className="mb-8 text-center">
-          <p className="text-sm font-semibold text-primary">FAQ</p>
-          <h2 className="mt-2 text-4xl font-semibold">Questions before you transfer?</h2>
-        </div>
-        <div className="grid gap-3">
-          {faqs.map(([question, answer]) => (
-            <Card key={question}>
-              <CardContent className="p-5">
-                <h3 className="font-semibold">{question}</h3>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">{answer}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section id="get-started" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-16 md:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 28 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.35 }}
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="overflow-hidden rounded-lg border bg-[#090b10] p-8 text-white md:p-12"
-        >
-          <div className="max-w-3xl">
-            <h2 className="text-4xl font-semibold md:text-5xl">Capture Your First AI Conversation</h2>
-            <p className="mt-4 text-lg leading-8 text-zinc-300">
-              Create a Flow from a link, export, raw transcript, or manual summary and continue the work in your next model.
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link to="/signup" className={buttonVariants({ size: 'lg', className: 'bg-white text-zinc-950 hover:bg-zinc-200' })}>
-                Get Started
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link to="/login" className={buttonVariants({ variant: 'outline', size: 'lg', className: 'border-white/15 bg-white/5 text-white hover:bg-white/10' })}>
-                Open Workspace
-              </Link>
-            </div>
+        <section className="mx-auto max-w-7xl px-4 py-16 md:px-8">
+          <div className="grid gap-4 md:grid-cols-3">
+            {howItWorks.map(([title, text], index) => (
+              <ScrollReveal key={title} delay={staggerDelay(index)}>
+                <Card className="lift h-full">
+                  <CardContent className="p-6">
+                    <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">0{index + 1}</div>
+                    <h3 className="text-xl font-semibold">{title}</h3>
+                    <p className="mt-3 text-sm leading-6 text-muted-foreground">{text}</p>
+                  </CardContent>
+                </Card>
+              </ScrollReveal>
+            ))}
           </div>
-        </motion.div>
-      </section>
-    </main>
-  </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-4 py-16 md:px-8">
+          <ScrollReveal className="mb-8 max-w-2xl">
+            <p className="text-sm font-semibold text-primary">Reliability</p>
+            <h2 className="mt-2 text-4xl font-semibold">Clear limits, useful fallbacks.</h2>
+          </ScrollReveal>
+          <div className="grid gap-4 md:grid-cols-3">
+            {reliabilityNotes.map(([title, text], index) => (
+              <ScrollReveal key={title} delay={staggerDelay(index)}>
+                <Card className="lift h-full">
+                  <CardContent className="p-6">
+                    <div className="font-semibold">{title}</div>
+                    <p className="mt-3 text-sm leading-6 text-muted-foreground">{text}</p>
+                  </CardContent>
+                </Card>
+              </ScrollReveal>
+            ))}
+          </div>
+        </section>
+
+        <section id="pricing" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-16 md:px-8">
+          <ScrollReveal className="mb-8 max-w-2xl">
+            <p className="text-sm font-semibold text-primary">Pricing</p>
+            <h2 className="mt-2 text-4xl font-semibold">Start free. Upgrade when you need more handoffs.</h2>
+          </ScrollReveal>
+          <div className="grid gap-4 lg:grid-cols-4">
+            {pricing.map(({ name, price, subtitle, items }, index) => (
+              <ScrollReveal key={name} delay={staggerDelay(index, 0.05, 0.08)}>
+                <Card className={cn('lift h-full', name === 'Pro' && 'border-primary')}>
+                  <CardContent className="p-6">
+                    <div className="text-sm font-medium text-muted-foreground">{name}</div>
+                    <div className="mt-3 text-3xl font-semibold">
+                      {price}
+                      <span className="text-base text-muted-foreground">{price === 'Custom' ? '' : '/month'}</span>
+                    </div>
+                    <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>
+                    <div className="mt-6 space-y-3 text-sm text-muted-foreground">
+                      {items.map((item) => (
+                        <div key={item} className="flex gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-accent" />
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </ScrollReveal>
+            ))}
+          </div>
+        </section>
+
+        <section id="faq" className="mx-auto max-w-4xl scroll-mt-24 px-4 py-16 md:px-8">
+          <ScrollReveal className="mb-8 text-center">
+            <p className="text-sm font-semibold text-primary">FAQ</p>
+            <h2 className="mt-2 text-4xl font-semibold">Questions before you transfer?</h2>
+          </ScrollReveal>
+          <div className="grid gap-3">
+            {faqs.map(([question, answer], index) => (
+              <ScrollReveal key={question} delay={staggerDelay(index, 0.05)}>
+                <Card>
+                  <CardContent className="p-5">
+                    <h3 className="font-semibold">{question}</h3>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{answer}</p>
+                  </CardContent>
+                </Card>
+              </ScrollReveal>
+            ))}
+          </div>
+        </section>
+
+        <section id="get-started" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-16 md:px-8">
+          <ScrollReveal>
+            <div className="relative overflow-hidden rounded-lg border bg-card p-8 shadow-sm md:p-12">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,color-mix(in_oklab,var(--primary)_16%,transparent),transparent_55%)]" />
+              <div className="relative max-w-3xl">
+                <h2 className="text-4xl font-semibold md:text-5xl">Capture Your First AI Conversation</h2>
+                <p className="mt-4 text-lg leading-8 text-muted-foreground">
+                  Create a Flow from a link, export, raw transcript, or manual summary and continue the work in your next model.
+                </p>
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                  <Link to="/signup" className={buttonVariants({ size: 'lg' })}>
+                    Get Started
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link to="/login" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
+                    Open Workspace
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </ScrollReveal>
+        </section>
+      </main>
+    </div>
   )
 }

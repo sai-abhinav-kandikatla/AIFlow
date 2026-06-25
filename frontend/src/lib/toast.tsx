@@ -107,27 +107,27 @@ export const toast = {
 const statusStyles: Record<ToastStatus, { icon: typeof CheckCircle2; accent: string; glow: string; bar: string }> = {
   success: {
     icon: CheckCircle2,
-    accent: 'text-emerald-300 bg-emerald-400/10 border-emerald-300/25',
-    glow: 'border-emerald-300/30 shadow-emerald-500/10',
-    bar: 'bg-emerald-300',
+    accent: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/25 dark:text-emerald-300 dark:bg-emerald-400/10 dark:border-emerald-300/25',
+    glow: 'border-emerald-500/25 shadow-emerald-500/10',
+    bar: 'bg-emerald-500 dark:bg-emerald-300',
   },
   error: {
     icon: AlertTriangle,
-    accent: 'text-red-300 bg-red-400/10 border-red-300/25',
-    glow: 'border-red-300/35 shadow-red-500/15',
-    bar: 'bg-red-300',
+    accent: 'text-red-600 bg-red-500/10 border-red-500/25 dark:text-red-300 dark:bg-red-400/10 dark:border-red-300/25',
+    glow: 'border-red-500/25 shadow-red-500/15',
+    bar: 'bg-red-500 dark:bg-red-300',
   },
   warning: {
     icon: AlertTriangle,
-    accent: 'text-amber-300 bg-amber-400/10 border-amber-300/25',
-    glow: 'border-amber-300/30 shadow-amber-500/10',
-    bar: 'bg-amber-300',
+    accent: 'text-amber-600 bg-amber-500/10 border-amber-500/25 dark:text-amber-300 dark:bg-amber-400/10 dark:border-amber-300/25',
+    glow: 'border-amber-500/25 shadow-amber-500/10',
+    bar: 'bg-amber-500 dark:bg-amber-300',
   },
   info: {
     icon: Info,
-    accent: 'text-indigo-200 bg-indigo-400/10 border-indigo-300/25',
-    glow: 'border-indigo-300/30 shadow-indigo-500/10',
-    bar: 'bg-indigo-300',
+    accent: 'text-primary bg-primary/10 border-primary/25',
+    glow: 'border-primary/25 shadow-primary/10',
+    bar: 'bg-primary',
   },
 }
 
@@ -156,8 +156,7 @@ const ToastItem = ({ item, onDismiss }: { item: ToastRecord; onDismiss: (id: str
   return (
     <div
       className={cn(
-        'group relative overflow-hidden rounded-lg border bg-slate-950/78 p-4 text-white shadow-2xl backdrop-blur-xl transition duration-200',
-        'animate-in slide-in-from-right-4 fade-in',
+        'group relative overflow-hidden rounded-lg border bg-card/95 p-4 text-foreground shadow-2xl backdrop-blur-xl animate-fade-slide-up',
         style.glow,
       )}
     >
@@ -168,21 +167,21 @@ const ToastItem = ({ item, onDismiss }: { item: ToastRecord; onDismiss: (id: str
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="text-sm font-semibold tracking-tight text-white">{item.title}</div>
-              {item.message ? <p className="mt-1 text-sm leading-5 text-slate-300">{item.message}</p> : null}
+              <div className="text-sm font-semibold tracking-tight">{item.title}</div>
+              {item.message ? <p className="mt-1 text-sm leading-5 text-muted-foreground">{item.message}</p> : null}
             </div>
             <button
               type="button"
               onClick={() => onDismiss(item.id)}
-              className="rounded-md p-1 text-slate-400 transition hover:bg-white/10 hover:text-white"
+              className="rounded-md p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground"
               aria-label="Dismiss notification"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
           {item.recovery ? (
-            <div className="mt-3 rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-xs leading-5 text-slate-300">
-              <span className="font-semibold text-slate-100">Recovery: </span>
+            <div className="mt-3 rounded-md border border-border bg-muted/60 px-3 py-2 text-xs leading-5 text-muted-foreground">
+              <span className="font-semibold text-foreground">Recovery: </span>
               {item.recovery}
             </div>
           ) : null}
@@ -191,7 +190,7 @@ const ToastItem = ({ item, onDismiss }: { item: ToastRecord; onDismiss: (id: str
               type="button"
               onClick={runAction}
               disabled={runningAction}
-              className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-md border border-white/15 bg-white/10 px-3 text-sm font-medium text-white transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-70"
+              className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-md border border-border bg-muted px-3 text-sm font-medium transition hover:bg-muted/80 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {runningAction ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
               {item.action.label}
@@ -200,7 +199,7 @@ const ToastItem = ({ item, onDismiss }: { item: ToastRecord; onDismiss: (id: str
         </div>
       </div>
       {!item.persistent && item.duration > 0 ? (
-        <div className="absolute inset-x-0 bottom-0 h-0.5 bg-white/10">
+        <div className="absolute inset-x-0 bottom-0 h-0.5 bg-border">
           <div className={cn('h-full origin-left toast-countdown', style.bar)} style={{ animationDuration: `${item.duration}ms` }} />
         </div>
       ) : null}

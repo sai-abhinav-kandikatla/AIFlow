@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Loader2, Trash2 } from 'lucide-react'
+import { ArrowLeft, Copy, Loader2, Share2, Trash2 } from 'lucide-react'
 import { toast } from '@/lib/toast'
 import { PromptTabs } from '@/components/thread/PromptTabs'
 import { ThreadCard } from '@/components/thread/ThreadCard'
@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { useAuth } from '@/contexts/AuthContext'
 import { threadApi } from '@/lib/api'
 import type { Thread } from '@/lib/types'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 export const ThreadDetailPage = () => {
   const { id } = useParams()
@@ -20,6 +21,38 @@ export const ThreadDetailPage = () => {
   const [regenerating, setRegenerating] = useState(false)
   const [editingTitle, setEditingTitle] = useState(false)
   const [title, setTitle] = useState('')
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [sharing, setSharing] = useState(false)
+
+  const toggleShare = async () => {
+    if (!token || !thread) return
+    setSharing(true)
+    try {
+      if (thread.is_shared) {
+        const response = await threadApi.unshare(token, thread.id)
+        setThread(response.thread)
+        toast.success('Sharing disabled')
+      } else {
+        const response = await threadApi.share(token, thread.id)
+        setThread(response.thread)
+        toast.success('Sharing enabled! Link copied to clipboard')
+        const link = `${window.location.origin}/shared/${response.thread.share_token}`
+        await navigator.clipboard.writeText(link)
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Share toggle failed')
+    } finally {
+      setSharing(false)
+    }
+  }
+
+  const copyShareLink = async () => {
+    if (!thread?.share_token) return
+    const link = `${window.location.origin}/shared/${thread.share_token}`
+    await navigator.clipboard.writeText(link)
+    toast.success('Share link copied to clipboard')
+  }
 
   useEffect(() => {
     if (!token || !id) return
@@ -47,16 +80,22 @@ export const ThreadDetailPage = () => {
       return
     }
 
+    const previousThread = thread
+    // Optimistic update
+    setThread({ ...thread, title: nextTitle })
+    setTitle(nextTitle)
+    setEditingTitle(false)
+
     try {
       const response = await threadApi.update(token, thread.id, { title: nextTitle })
       setThread(response.thread)
       setTitle(response.thread.title)
       toast.success('Flow renamed')
     } catch (error) {
-      setTitle(thread.title)
+      // Rollback on failure
+      setThread(previousThread)
+      setTitle(previousThread.title)
       toast.error(error instanceof Error ? error.message : 'Rename failed')
-    } finally {
-      setEditingTitle(false)
     }
   }
 
@@ -76,13 +115,16 @@ export const ThreadDetailPage = () => {
 
   const deleteThread = async () => {
     if (!token || !thread) return
-    if (!window.confirm(`Delete Flow "${thread.title}"?`)) return
+    setIsDeleting(true)
     try {
       await threadApi.delete(token, thread.id)
       toast.success('Flow deleted')
       navigate('/app/threads')
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Delete failed')
+    } finally {
+      setIsDeleting(false)
+      setShowDeleteConfirm(false)
     }
   }
 
@@ -141,15 +183,56 @@ export const ThreadDetailPage = () => {
             )}
             <p className="mt-2 text-sm text-muted-foreground">Click the title to rename this Flow.</p>
           </div>
-          <Button variant="destructive" onClick={deleteThread} className="rounded-xl">
-            <Trash2 className="h-4 w-4" />
-            Delete
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={thread.is_shared ? "secondary" : "outline"}
+              onClick={toggleShare}
+              disabled={sharing}
+              className="rounded-xl gap-2"
+            >
+              <Share2 className="h-4 w-4" />
+              {thread.is_shared ? 'Shared' : 'Share'}
+            </Button>
+            <Button variant="destructive" onClick={() => setShowDeleteConfirm(true)} className="rounded-xl gap-2">
+              <Trash2 className="h-4 w-4" />
+              Delete
+            </Button>
+          </div>
         </div>
+        {thread.is_shared && thread.share_token && (
+          <div className="mt-4 flex flex-col gap-2 rounded-2xl border bg-muted/30 p-4 text-sm md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-foreground">Public share link active</p>
+              <p className="mt-1 truncate text-xs text-muted-foreground">
+                {window.location.origin}/shared/{thread.share_token}
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={copyShareLink}
+              className="shrink-0 rounded-xl gap-2"
+            >
+              <Copy className="h-3.5 w-3.5" />
+              Copy Link
+            </Button>
+          </div>
+        )}
       </div>
 
       <ThreadCard thread={thread} />
       <PromptTabs thread={thread} prompts={thread.prompts} onRegenerate={regenerate} regenerating={regenerating} />
+
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Delete Flow"
+        description={`Are you sure you want to delete the Flow "${thread.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        isLoading={isDeleting}
+        onConfirm={deleteThread}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   )
 }

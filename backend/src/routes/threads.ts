@@ -1,10 +1,12 @@
 import { Router } from "express";
 import type { NextFunction, Request, Response } from "express";
+import crypto from "crypto";
 import rateLimit from "express-rate-limit";
 import multer from "multer";
 import { z } from "zod";
 import { InputMethod as PrismaInputMethod } from "../generated/prisma/enums.js";
 import { requireAuth } from "../middleware/auth.js";
+import { sanitizeMiddleware } from "../middleware/sanitize.js";
 import { prisma } from "../lib/prisma.js";
 import { analyzeConversation, modelNames, regeneratePrompts } from "../services/gemini.js";
 import { InputMethod, MAX_CONVERSATION_CHARS, normalizeInput } from "../services/inputParser.js";
@@ -88,6 +90,8 @@ const serializeThread = <T extends {
   tags: unknown;
   rawInput: string;
   inputMethod: string;
+  shareToken?: string | null;
+  isShared?: boolean;
   createdAt: Date;
   updatedAt: Date;
   prompts?: Array<{ id: string; modelName: string; promptText: string; createdAt: Date }>;
@@ -102,6 +106,8 @@ const serializeThread = <T extends {
   tags: Array.isArray(thread.tags) ? thread.tags : [],
   raw_input: thread.rawInput,
   input_method: thread.inputMethod.toLowerCase(),
+  share_token: thread.shareToken ?? null,
+  is_shared: thread.isShared ?? false,
   created_at: thread.createdAt,
   updated_at: thread.updatedAt,
   prompts:
@@ -189,13 +195,33 @@ const ensureThreadOwner = async (threadId: string, userId: string) => {
   return thread;
 };
 
+router.get(
+  "/shared/:token",
+  asyncHandler(async (req, res) => {
+    const token = typeof req.params.token === "string" ? req.params.token.trim() : "";
+    const thread = await prisma.thread.findFirst({
+      where: { shareToken: token, isShared: true },
+      include: { prompts: { orderBy: { createdAt: "asc" } } }
+    });
+    if (!thread) {
+      throw new AppError(404, "Shared Flow not found or link has expired.");
+    }
+    res.json({ thread: serializeThread(thread) });
+  })
+);
+
 router.use(requireAuth);
+router.use(sanitizeMiddleware);
 
 router.get(
   "/",
   asyncHandler(async (req, res) => {
     const search = typeof req.query.search === "string" ? req.query.search.trim().toLowerCase() : "";
     const tag = typeof req.query.tag === "string" ? req.query.tag.trim().toLowerCase() : "";
+    const date = typeof req.query.date === "string" ? req.query.date.trim() : "";
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.max(1, parseInt(req.query.limit as string) || 10);
+    const skip = (page - 1) * limit;
 
     const threads = await prisma.thread.findMany({
       where: {
@@ -213,13 +239,22 @@ router.get(
       orderBy: { createdAt: "desc" }
     });
 
-    const filtered = tag
-      ? threads.filter((thread) =>
-          Array.isArray(thread.tags) ? thread.tags.some((item) => String(item).toLowerCase() === tag) : false
-        )
-      : threads;
+    const filtered = threads.filter((thread) => {
+      const matchesTag = !tag || (Array.isArray(thread.tags) && thread.tags.some((item) => String(item).toLowerCase() === tag));
+      const matchesDate = !date || thread.createdAt.toISOString().slice(0, 10) === date;
+      return matchesTag && matchesDate;
+    });
 
-    res.json({ threads: filtered.map(serializeThread) });
+    const total = filtered.length;
+    const totalPages = Math.ceil(total / limit);
+    const paginated = filtered.slice(skip, skip + limit);
+
+    res.json({
+      threads: paginated.map(serializeThread),
+      total,
+      page,
+      totalPages
+    });
   })
 );
 
@@ -391,6 +426,48 @@ router.post(
     );
 
     const updated = await ensureThreadOwner(id, req.auth!.user.id);
+    res.json({ thread: serializeThread(updated) });
+  })
+);
+
+router.post(
+  "/:id/share",
+  asyncHandler(async (req, res) => {
+    const id = routeId(req.params.id);
+    const thread = await ensureThreadOwner(id, req.auth!.user.id);
+    
+    let shareToken = thread.shareToken;
+    if (!shareToken) {
+      shareToken = crypto.randomUUID();
+    }
+
+    const updated = await prisma.thread.update({
+      where: { id, userId: req.auth!.user.id },
+      data: {
+        isShared: true,
+        shareToken
+      },
+      include: { prompts: { orderBy: { createdAt: "asc" } } }
+    });
+
+    res.json({ thread: serializeThread(updated) });
+  })
+);
+
+router.post(
+  "/:id/unshare",
+  asyncHandler(async (req, res) => {
+    const id = routeId(req.params.id);
+    await ensureThreadOwner(id, req.auth!.user.id);
+
+    const updated = await prisma.thread.update({
+      where: { id, userId: req.auth!.user.id },
+      data: {
+        isShared: false
+      },
+      include: { prompts: { orderBy: { createdAt: "asc" } } }
+    });
+
     res.json({ thread: serializeThread(updated) });
   })
 );

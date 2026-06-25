@@ -7,6 +7,7 @@ import { OnboardingPage } from '@/pages/app/OnboardingPage'
 import { SettingsPage } from '@/pages/app/SettingsPage'
 import { ThreadDetailPage } from '@/pages/app/ThreadDetailPage'
 import { ThreadsPage } from '@/pages/app/ThreadsPage'
+import { ExportPage } from '@/pages/app/ExportPage'
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
 import { AuthCallbackPage } from '@/pages/auth/AuthCallbackPage'
 import { LoginPage } from '@/pages/auth/LoginPage'
@@ -14,6 +15,7 @@ import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
 import { SignupPage } from '@/pages/auth/SignupPage'
 import { LandingPage } from '@/pages/LandingPage'
 import { PricingPage } from '@/pages/PricingPage'
+import { SharedThreadPage } from '@/pages/app/SharedThreadPage'
 
 export const App = () => (
   <Routes>
@@ -24,6 +26,7 @@ export const App = () => (
     <Route path="/auth/callback" element={<AuthCallbackPage />} />
     <Route path="/forgot-password" element={<ForgotPasswordPage />} />
     <Route path="/reset-password" element={<ResetPasswordPage />} />
+    <Route path="/shared/:token" element={<SharedThreadPage />} />
     <Route element={<ProtectedRoute />}>
       <Route path="/app/onboarding" element={<OnboardingPage />} />
       <Route path="/app" element={<AppLayout />}>
@@ -31,6 +34,7 @@ export const App = () => (
         <Route path="threads" element={<ThreadsPage />} />
         <Route path="threads/new" element={<NewThreadPage />} />
         <Route path="threads/:id" element={<ThreadDetailPage />} />
+        <Route path="export" element={<ExportPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
     </Route>

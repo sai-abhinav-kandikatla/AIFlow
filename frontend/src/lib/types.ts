@@ -33,6 +33,8 @@ export type Thread = {
   input_method: InputMethod
   created_at: string
   updated_at: string
+  share_token: string | null
+  is_shared: boolean
   prompts: GeneratedPrompt[]
 }
 

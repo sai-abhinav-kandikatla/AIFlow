@@ -106,12 +106,15 @@ export const authApi = {
 }
 
 export const threadApi = {
-  list: (token: string, query?: { search?: string; tag?: string }) => {
+  list: (token: string, query?: { search?: string; tag?: string; page?: number; limit?: number; date?: string }) => {
     const params = new URLSearchParams()
     if (query?.search) params.set('search', query.search)
     if (query?.tag) params.set('tag', query.tag)
+    if (query?.date) params.set('date', query.date)
+    if (query?.page) params.set('page', String(query.page))
+    if (query?.limit) params.set('limit', String(query.limit))
     const suffix = params.toString() ? `?${params.toString()}` : ''
-    return apiRequest<{ threads: Thread[] }>(`/api/threads${suffix}`, { token })
+    return apiRequest<{ threads: Thread[]; total: number; page: number; totalPages: number }>(`/api/threads${suffix}`, { token })
   },
   get: (token: string, id: string) => apiRequest<{ thread: Thread }>(`/api/threads/${id}`, { token }),
   create: (
@@ -163,6 +166,20 @@ export const threadApi = {
       method: 'POST',
       body: JSON.stringify({}),
     }),
+  share: (token: string, id: string) =>
+    apiRequest<{ thread: Thread }>(`/api/threads/${id}/share`, {
+      token,
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+  unshare: (token: string, id: string) =>
+    apiRequest<{ thread: Thread }>(`/api/threads/${id}/unshare`, {
+      token,
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+  getShared: (shareToken: string) =>
+    apiRequest<{ thread: Thread }>(`/api/threads/shared/${shareToken}`),
 }
 
 export const billingApi = {

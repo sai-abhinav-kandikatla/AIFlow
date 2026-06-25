@@ -16,7 +16,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { toast } from '@/lib/toast'
-import { buttonVariants } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { FlowOnboardingEmptyState } from '@/components/flow/FlowOnboardingEmptyState'
 import { UsageBanner } from '@/components/thread/UsageBanner'
@@ -118,15 +118,25 @@ export const DashboardPage = () => {
   const { token, profile } = useAuth()
   const [threads, setThreads] = useState<Thread[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+  const loadThreads = () => {
     if (!token) return
     setLoading(true)
+    setError(null)
     threadApi
       .list(token)
       .then((response) => setThreads(response.threads))
-      .catch((error) => toast.error(error instanceof Error ? error.message : 'Could not load Flows'))
+      .catch((err) => {
+        const msg = err instanceof Error ? err.message : 'Could not load Flows'
+        setError(msg)
+        toast.error(msg)
+      })
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    loadThreads()
   }, [token])
 
   const monthlyUsage = currentMonthCount(threads)
@@ -170,7 +180,7 @@ export const DashboardPage = () => {
 
       <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
         <div className="space-y-6">
-          {loading || recent.length > 0 ? (
+          {loading || error || recent.length > 0 ? (
             <Card className="animate-scale-in">
               <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <CardTitle className="tracking-tight">Recent Flows</CardTitle>
@@ -183,6 +193,13 @@ export const DashboardPage = () => {
                   <div className="flex items-center justify-center p-10 text-muted-foreground">
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     Loading Flows
+                  </div>
+                ) : error ? (
+                  <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
+                    <p className="mb-4 text-sm text-destructive">{error}</p>
+                    <Button variant="outline" size="sm" onClick={loadThreads} className="rounded-xl">
+                      Retry
+                    </Button>
                   </div>
                 ) : (
                   <div className="divide-y divide-border/70">
